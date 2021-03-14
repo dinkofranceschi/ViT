@@ -192,7 +192,7 @@ class TransformerEncoderLayer(nn.Module):
                     pos: Optional[Tensor] = None):
         src2 = self.norm1(src)
         q = k = self.with_pos_embed(src2, pos)
-        src2 = self.self_attn(q, k, value=src2)
+        src2 = self.self_attn(q, k, value=src2)[0]
         src = src + self.dropout1(src2)
         src2 = self.norm2(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src2))))
@@ -234,145 +234,6 @@ def _get_activation_fn(activation):
         return F.glu
     raise RuntimeError(F"activation should be relu/gelu, not {activation}.")
     
-    
-
-class DeTransformer(nn.Module):
-    def __init__(self, d_model=512, nhead=8, num_encoder_layers=6,
-                 dim_feedforward=2048, dropout=0.1,
-                 activation="relu", normalize_before=False,
-                 return_intermediate_dec=False):
-        super().__init__()
-
-        encoder_layer = TransformerEncoderLayer(d_model, nhead, dim_feedforward,
-                                                dropout, activation, normalize_before)
-        encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
-        self.encoder = TransformerEncoder(encoder_layer, num_encoder_layers, encoder_norm)
-        
-        self._reset_parameters()
-
-        self.d_model = d_model
-        self.nhead = nhead
-
-    def _reset_parameters(self):
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-
-    def forward(self, src, query_embed, pos_embed):
-        
-        bs, hw, d = src.shape 
-        #src = src.permute(1, 0, 2)  #-> BS x N x d -> N x BS x d
-        
-        #pos_embed = pos_embed.permute(1, 0, 2) # Same for positional embeddings 1 x num_patchs+1 x d  -> num_patches+1 x 1 x d
-        query_embed = query_embed.unsqueeze(1).repeat(1, bs, 1) #num_queries x d -> num_queries x 1 x d -> num_queries x batch_size x d
-        
-        memory = self.encoder(src, pos=pos_embed)
-        #print(f'memory_shape (out_enc) = {memory.shape}')
-        return memory
-
-class DeTransformerEncoder(nn.Module):
-
-    def __init__(self, encoder_layer, num_layers, norm=None):
-        super().__init__()
-        self.layers = _get_clones(encoder_layer, num_layers)
-        self.num_layers = num_layers
-        self.norm = norm
-
-    def forward(self, src,
-                pos: Optional[Tensor] = None):
-        output = src
-        
-        for layer in self.layers:
-            output = layer(output,pos=pos)
-            #print(f'output_transformer_encoder_shape = {output.shape}')
-
-        if self.norm is not None:
-            output = self.norm(output)
-
-        return output
-
-class DeTransformerEncoderLayer(nn.Module):
-
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1,
-                 activation="relu", normalize_before=False):
-        super().__init__()
-        self.self_attn = nn.DeMultiheadAttention(d_model, nhead, dropout=dropout)
-        # Implementation of Feedforward model
-        self.linear1 = nn.Linear(d_model, dim_feedforward)
-        self.dropout = nn.Dropout(dropout)
-        self.linear2 = nn.Linear(dim_feedforward, d_model)
-
-        self.norm1 = nn.LayerNorm(d_model)
-        self.norm2 = nn.LayerNorm(d_model)
-        self.dropout1 = nn.Dropout(dropout)
-        self.dropout2 = nn.Dropout(dropout)
-
-        self.activation = _get_activation_fn(activation)
-        self.normalize_before = normalize_before
-
-    def with_pos_embed(self, tensor, pos: Optional[Tensor]):
-        return tensor if pos is None else tensor + pos
-
-    def forward_post(self,
-                     src,
-                     pos: Optional[Tensor] = None):
-        q = k = self.with_pos_embed(src, pos)
-        src2 = self.self_attn(q, k, value=src)[0]
-        src = src + self.dropout1(src2)
-        src = self.norm1(src)
-        src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
-        src = src + self.dropout2(src2)
-        src = self.norm2(src)
-        return src
-
-    def forward_pre(self, src,
-                    pos: Optional[Tensor] = None):
-        src2 = self.norm1(src)
-        q = k = self.with_pos_embed(src2, pos)
-        src2 = self.self_attn(q, k, value=src2)[0]
-        src = src + self.dropout1(src2)
-        src2 = self.norm2(src)
-        src2 = self.linear2(self.dropout(self.activation(self.linear1(src2))))
-        src = src + self.dropout2(src2)
-        return src
-
-    def forward(self, src,
-                pos: Optional[Tensor] = None):
-        if self.normalize_before:
-            return self.forward_pre(src , pos)
-        return self.forward_post(src, pos)
-
-
-class DeMultiheadAttention(nn.Module):
-    def __init__(self,d_model,nhead,dropout=0.1):
-        super().__init__()
-        self.qkv=nn.Linear(d_model,d_model*3,bias=True)
-        self.nhead=nhead
-        self.d_model=d_model
-        self.head_dim=d_model //nhead
-        self.dp_attn=nn.Dropout(dropout)
-        self.combine_heads = nn.Linear(d_model,d_model)
-        self.dp_proj = nn.Dropout(dropout)
-        self.pq=nn.Linear(d_model,d_model)
-        self.pk=nn.Linear(d_model,d_model)
-    def forward(self,x,pos):
-        
-        qkv = self.qkv(x).chunk(3,dim=-1) # BxLxemb_d -> BxLx (3emb_d) -> tuple (BxLx(emb_d),BxLx(emb_d) ,BxLx(emb_d))
-        q, k, v = map(lambda t: rearrange(t, 'b l (h d) -> b l h d', h = self.nhead), qkv) # every instance to Batch_sizexTokenxnum_headsxhead_dim
-        pq=self.pq(pos)
-        pk=self.pk(pos)
-        pq=rearrange(pq,'b l (h d) -> b l h d',h=self.nhead)
-        pk=rearrange(pk,'b l (h d) -> b l h d',h=self.nhead)
-        
-        CC= torch.einsum('bnhd,blhd->bhnl', q,k) #n,l = num_tokens
-        CP= torch.einsum('bnhd,blhd->bhnl', q,pq)
-        PC= torch.einsum('bnhd,blhd->bhnl', k,pk)
-        
-        attn=torch.softmax(CC+CP+PC / (3*self.d_model)**(0.5),dim=-1)
-        
-        out= torch.einsum('bhnl,blhd->bnhd',attn,v)
-        
-        return out
     
 
 
@@ -449,7 +310,7 @@ class MultiheadAttentionPerformer(nn.MultiheadAttention):
         '''Output projections'''
         attn_output = nn.functional.linear(out, self.out_proj.weight, self.out_proj.bias)
 
-        return attn_output
+        return attn_output, None
 
 
     def softmax_kernel_transformation(self, data, is_query, numerical_stabilizer=0.000001):
