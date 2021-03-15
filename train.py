@@ -53,6 +53,14 @@ def get_args_parser():
     parser.add_argument('--pre_trained', action='store_false',
                         help='load pre-trained model trained on ImageNet (not implemented yet)')    
     '''Logging/wandb'''
+    parser.add_argument('--wandb_project', default = 'Deformable ViT' ,type=str)
+    parser.add_argument('--wandb_entity', default = 'ltononro' ,type=str)
+    parser.add_argument('--wandb_group',default = 'ViT', type=str)
+    
+    parser.add_argument('--log_dir', default='logs', type=str)
+    parser.add_argument('--output_dir', default= './outputs/', type=str)
+    parser.add_argument('--save_freq', default= 20, type=int)
+    parser.add_argument('--saving_name', default= 'ViT', type=str)
 
     return parser
 
@@ -84,8 +92,7 @@ def build_model(args):
         print('Building ViT timm...')
         model = timm.create_model('vit_base_patch16_224',pretrained=args.pre_trained)
         #Only works for 224x224 datasets (e.g. CIFAR100_224)
-        print('Not implemented')
-        pass
+
     elif args.attention == 'performer_timm':
         timm_model=True
         print('Building ViT+Performer timm...')
@@ -93,8 +100,8 @@ def build_model(args):
         for elem in model.blocks:
             attention = elem.attn
             elem.attn = PerformerAttention(attention,768,num_heads=attention.num_heads,n_orf=args.num_orf,kernel=args.kernel)
-        print('Not implemented')
-        pass
+        #Only works for 224x224 datasets (e.g. CIFAR100_224)
+
     elif args.attention == 'deformable_transformer':
         print('Not implemented')
         pass
@@ -122,7 +129,7 @@ def build_model(args):
 
 
 def build_dataset(args):
-    #Data
+    ''' Data '''
     if args.dataset == 'MNIST':
         train_loader = torch.utils.data.DataLoader(
           torchvision.datasets.MNIST('./data/', train=True, download=True,
@@ -215,6 +222,7 @@ def build_dataset(args):
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ])),
               batch_size=args.batch_size, shuffle=True)
+          
           args.img_size = 32
           args.num_classes = 1000       
           args.in_chans= 3
@@ -244,10 +252,47 @@ def build_dataset(args):
         args.num_classes = 100
         args.in_chans= 3
         
+    if args.dataset == 'MNIST_224':
+        train_loader = torch.utils.data.DataLoader(
+          torchvision.datasets.MNIST('./data/', train=True, download=True,
+                                     transform=torchvision.transforms.Compose([
+                                    torchvision.transforms.ToTensor(),
+                                    torchvision.transforms.ToPILImage(),
+                                    torchvision.transforms.Grayscale(3),
+                                    torchvision.transforms.Resize(224,interpolation=3),
+                                    torchvision.transforms.RandomHorizontalFlip(),
+                                    torchvision.transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+                                    torchvision.transforms.ToTensor(),
+                                    torchvision.transforms.Normalize(
+                                         (0.1307,), (0.3081,)),
+                                     ])),
+          batch_size=args.batch_size, shuffle=True)
+        
+        valid_loader = torch.utils.data.DataLoader(
+          torchvision.datasets.MNIST('./data/', train=False, download=True,
+                                     transform=torchvision.transforms.Compose([
+                                    torchvision.transforms.ToTensor(),
+                                    torchvision.transforms.ToPILImage(),
+                                    torchvision.transforms.Grayscale(3),
+                                    torchvision.transforms.Resize(224,interpolation=3),
+                                    torchvision.transforms.ToTensor(),
+                                    torchvision.transforms.Normalize(
+                                         (0.1307,), (0.3081,)),
+                                     ])),
+          batch_size=args.batch_size, shuffle=True)
+        
+        args.img_size= 224
+        args.num_classes=10
+        args.in_chans= 3 #number of in channels
+        
     return train_loader,valid_loader
 
 
 def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epochs,clip_norm):
+    run = wandb.init(project=args.wandb_project,entity=args.wandb_entity,group=args.wandb_group)
+    wandb.config.update(args)
+    wandb.watch(model)
+    
     log={'train_loss':[],
          'train_accuracy':[],
          'val_loss':[],
@@ -270,8 +315,7 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
             optimizer.zero_grad()
             if max_norm > 0:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
-            #REMOVE
-            #loss.backward(retain_graph=True)
+
             loss.backward()
             optimizer.step()
             acc = (output.argmax(dim=1) == label).float().mean()
@@ -292,6 +336,19 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
                 acc = (val_output.argmax(dim=1) == label).float().mean()
                 epoch_val_accuracy += acc / len(valid_loader)
                 epoch_val_loss += val_loss / len(valid_loader)
+        if args.output_dir:
+            checkpoint_paths = [Path(args.output_dir) / 'checkpoint.pth']
+            # extra checkpoint before LR drop and every 100 epochs
+            if (epoch) % args.save_freq==0:
+                checkpoint_paths.append(Path(args.output_dir)/ f'checkpoint_{args.model_name}_{epoch:04}.pth')
+            for checkpoint_path in checkpoint_paths:
+                save_on_master({
+                    'model': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                    'scheduler': scheduler.state_dict(),
+                    'epoch': epoch,
+                    'args': args,
+                }, checkpoint_path)
         print(
             f"Epoch : {epoch+1} - loss : {epoch_loss:.4f} - acc: {epoch_accuracy:.4f} - val_loss : {epoch_val_loss:.4f} - val_acc: {epoch_val_accuracy:.4f}\n -curr_lr: {scheduler.get_last_lr()[0]}"
         )
@@ -300,7 +357,18 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         log['val_loss']=log['val_loss']+[epoch_val_loss.item()]
         log['val_accuracy']=log['val_accuracy']+[epoch_val_accuracy.item()]
         log['learning_rate']=log['learning_rate']+scheduler.get_last_lr()
-
+        run.log({"train_loss":epoch_loss.item(),
+                   "train_accuracy":epoch_accuracy.item(),
+                   "val_loss":epoch_val_loss.item(),
+                   "val_accuracy":epoch_val_accuracy.item(),
+                   "lr":new_lr})
+        final_path=Path(args.output_dir)/ f'final_model_{args.saving_name}_{args.epochs}_epochs.pth'
+        save_on_master({
+                'model': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                'epoch': epoch,
+                'args': args,
+            }, final_path)
     
     
         
