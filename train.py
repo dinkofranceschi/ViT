@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from model import VisionTransformer, Transformer, Performer
+from timm_performer.timm_vision_performer import PerformerAttention
 import torch.optim as optim
 import torchvision
 from tqdm import tqdm
@@ -11,6 +12,7 @@ import datetime
 import json
 import os
 from timm.loss import LabelSmoothingCrossEntropy
+import timm
 import wandb
 
 
@@ -57,6 +59,7 @@ def get_args_parser():
 
 
 def build_model(args):
+    timm_model=False
     if args.attention == 'transformer':
         transformer=Transformer(
             d_model= args.embed_dim,
@@ -76,7 +79,33 @@ def build_model(args):
             normalize_before=True,
         )
 
-    model = VisionTransformer(img_size=args.img_size,
+    elif args.attention == 'transformer_timm':
+        timm_model=True
+        print('Building ViT timm...')
+        model = timm.create_model('vit_base_patch16_224',pretrained=args.pre_trained)
+        #Only works for 224x224 datasets (e.g. CIFAR100_224)
+        print('Not implemented')
+        pass
+    elif args.attention == 'performer_timm':
+        timm_model=True
+        print('Building ViT+Performer timm...')
+        model = timm.create_model('vit_base_patch16_224',pretrained=args.pre_trained)
+        for elem in model.blocks:
+            attention = elem.attn
+            elem.attn = PerformerAttention(attention,768,num_heads=attention.num_heads,n_orf=args.num_orf,kernel=args.kernel)
+        print('Not implemented')
+        pass
+    elif args.attention == 'deformable_transformer':
+        print('Not implemented')
+        pass
+    elif args.attention == 'deformable_performer':
+        print('Not implemented')
+        pass
+    else:
+        print(f'Unknown attention {args.attention}')
+    if not timm_model:
+        print('Building ViT...')
+        model = VisionTransformer(img_size=args.img_size,
                               patch_size=args.patch_size,
                               in_chans=args.in_chans,
                               num_classes=args.num_classes,

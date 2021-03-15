@@ -404,34 +404,3 @@ class Performer(Transformer):
             layer.self_attn = MultiheadAttentionPerformer(d_model,nhead,dropout=dropout,num_orf=num_orf,kernel=kernel)
 
 
-# #Testing the pipeline
-# img_size=224
-# patch_size=16
-# in_chans=3
-# num_classes=100
-# embed_dim=384
-# enc_layers=6
-# dec_layers=6
-# num_heads=8
-# mlp_ratio=4
-# dim_feedforward=mlp_ratio*embed_dim
-# batch_size=5
-
-# transformer=Transformer(
-#         d_model=embed_dim,
-#         dropout=0.1,
-#         nhead=num_heads,
-#         dim_feedforward=dim_feedforward,
-#         num_encoder_layers=enc_layers,
-#         num_decoder_layers=dec_layers,
-#         normalize_before=True,
-#         return_intermediate_dec=False,
-#     )
-
-
-
-# vit = VisionTransformer(img_size=img_size,patch_size=patch_size,in_chans=in_chans,num_classes=num_classes, num_queries=100,transformer=transformer)
-
-# img = torch.randn(batch_size,in_chans, img_size,img_size)
-
-# print(vit(img).shape)
