@@ -19,8 +19,8 @@ To-do list:
 
 # Links
 
-https://github.com/fundamentalvision/Deformable-DETR
-https://github.com/microsoft/DeBERTa 
-https://github.com/VITA-Group/TransGAN
-https://github.com/google-research/google-research/tree/master/performer
-
+- https://github.com/fundamentalvision/Deformable-DETR
+- https://github.com/microsoft/DeBERTa 
+- https://github.com/VITA-Group/TransGAN
+- https://github.com/google-research/google-research/tree/master/performer
+- https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
