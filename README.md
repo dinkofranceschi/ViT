@@ -17,6 +17,10 @@ To-do list:
 # Usage
 
 
+# Links
 
-
+https://github.com/fundamentalvision/Deformable-DETR
+https://github.com/microsoft/DeBERTa 
+https://github.com/VITA-Group/TransGAN
+https://github.com/google-research/google-research/tree/master/performer
 
