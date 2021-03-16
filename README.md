@@ -19,8 +19,9 @@ To-do list:
 
 # Links
 
-- https://github.com/fundamentalvision/Deformable-DETR
-- https://github.com/microsoft/DeBERTa 
-- https://github.com/VITA-Group/TransGAN
-- https://github.com/google-research/google-research/tree/master/performer
-- https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py
+- https://github.com/fundamentalvision/Deformable-DETR (deformable multscaleattention)
+- https://github.com/microsoft/DeBERTa (c-c c-p p-c attentions)
+- https://github.com/VITA-Group/TransGAN (locality aware initialization)
+- https://github.com/google-research/google-research/tree/master/performer (performer tensorflow implementation)
+- https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py (timm library)
+- https://wandb.ai/ltononro/Deformable%20ViT (wandb logging)
