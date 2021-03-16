@@ -87,21 +87,35 @@ def build_model(args):
             normalize_before=True,
         )
 
-    elif args.attention == 'transformer_timm':
+    elif args.attention == 'transformer_timm_base':
         timm_model=True
-        print('Building ViT timm...')
+        print('Building ViT_Base timm...')
         model = timm.create_model('vit_base_patch16_224',pretrained=args.pre_trained)
         #Only works for 224x224 datasets (e.g. CIFAR100_224)
 
-    elif args.attention == 'performer_timm':
+    elif args.attention == 'performer_timm_base':
         timm_model=True
-        print('Building ViT+Performer timm...')
+        print('Building ViT_Base+Performer timm...')
         model = timm.create_model('vit_base_patch16_224',pretrained=args.pre_trained)
         for elem in model.blocks:
             attention = elem.attn
+            #This module takes the attention and copy its weights with the favor+ module
             elem.attn = PerformerAttention(attention,768,num_heads=attention.num_heads,n_orf=args.num_orf,kernel=args.kernel)
         #Only works for 224x224 datasets (e.g. CIFAR100_224)
-
+    elif args.attention == 'transformer_timm':
+        timm_model = True
+        print('Building ViT timm...')
+        model = timm.models.vision_transformer.VisionTransformer(img_size=args.img_size,
+                                                         patch_size=args.patch_size,
+                                                         in_chans=args.in_chans,
+                                                         num_classes = args.num_classes,
+                                                         embed_dim=args.embed_dim,
+                                                         depth=args.num_layers,
+                                                         num_heads=args.num_heads,
+                                                         mlp_ratio = args.dim_feedforward // args.embed_dim,
+                                                         attn_drop_rate=args.dropout,
+                                                         )
+        
     elif args.attention == 'deformable_transformer':
         print('Not implemented')
         pass
@@ -340,7 +354,7 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
             checkpoint_paths = [Path(args.output_dir) / 'checkpoint.pth']
             # extra checkpoint before LR drop and every 100 epochs
             if (epoch) % args.save_freq==0:
-                checkpoint_paths.append(Path(args.output_dir)/ f'checkpoint_{args.model_name}_{epoch:04}.pth')
+                checkpoint_paths.append(Path(args.output_dir)/ f'checkpoint_{args.saving_name}_{epoch:04}.pth')
             for checkpoint_path in checkpoint_paths:
                 save_on_master({
                     'model': model.state_dict(),
