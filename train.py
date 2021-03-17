@@ -24,7 +24,7 @@ def get_args_parser():
     parser.add_argument('--epochs', default=100,type=int)
     parser.add_argument('--gamma_lr',default=0.9,type=float,
                         help='gamma in the step learning rate')
-    parser.add_argument('--step_lr',default=30,type=float,
+    parser.add_argument('--step_lr',default=70,type=float,
                         help='peridicioty of lr decay by gamma')    
     parser.add_argument('--clip_norm', default=1, type = float)
     parser.add_argument('--device', default='cuda')
@@ -188,7 +188,7 @@ def build_model(args):
     
     optimizer= optim.AdamW(model.parameters(),lr=args.lr)
 
-    scheduler=optim.lr_scheduler.StepLR(optimizer,step_size=50,gamma=1e-2) 
+    scheduler=optim.lr_scheduler.StepLR(optimizer,step_size=args.step_lr,gamma=args.gamma_lr) 
     
     return model,criterion, optimizer,scheduler
 
