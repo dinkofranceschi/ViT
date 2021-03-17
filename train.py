@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from model import VisionTransformer, Transformer, Performer
-from timm_performer.timm_vision_performer import PerformerAttention
 import torch.optim as optim
 import torchvision
 from tqdm import tqdm
@@ -33,6 +32,8 @@ def get_args_parser():
                         help='smoothing classification labels')
     parser.add_argument('--dataset',default='MNIST',type=str,
                         help='MNIST,CIFAR100,CIFAR10,ImageNet...')
+    parser.add_argument('--locality_aware_init', nargs='+', default=None, type=int,
+                        help='List of epochs for locality aware initialization, it only works for timm models or with performers')
     '''Model parameters'''
     parser.add_argument('--attention',default='performer',type=str,
                         help='Type of attention among Performer,Deformable Transformer...')
@@ -95,6 +96,7 @@ def build_model(args):
 
     elif args.attention == 'performer_timm_base':
         timm_model=True
+        from timm_classes.timm_vision_performer import PerformerAttention
         print('Building ViT_Base+Performer timm...')
         model = timm.create_model('vit_base_patch16_224',pretrained=args.pre_trained)
         for elem in model.blocks:
@@ -115,7 +117,56 @@ def build_model(args):
                                                          mlp_ratio = args.dim_feedforward // args.embed_dim,
                                                          attn_drop_rate=args.dropout,
                                                          )
+    elif args.attention == 'performer_timm':
+        timm_model = True
+        from timm_classes.timm_vision_performer import PerformerAttention
+        print('Building ViT+performer timm...')
+        model = timm.models.vision_transformer.VisionTransformer(img_size=args.img_size,
+                                                         patch_size=args.patch_size,
+                                                         in_chans=args.in_chans,
+                                                         num_classes = args.num_classes,
+                                                         embed_dim=args.embed_dim,
+                                                         depth=args.num_layers,
+                                                         num_heads=args.num_heads,
+                                                         mlp_ratio = args.dim_feedforward // args.embed_dim,
+                                                         attn_drop_rate=args.dropout,
+                                                         )
         
+        for elem in model.blocks:
+            attention = elem.attn
+            #This module takes the attention and copy its weights + adds the favor+ algorithm
+            elem.attn = PerformerAttention(attention,args.embed_dim,num_heads=attention.num_heads,n_orf=args.num_orf,kernel=args.kernel,attn_drop=args.dropout)
+            
+    elif args.attention == 'transformer_timm_lai':
+        print('Building ViT timm with locality-aware-intialization')
+        from timm_classes.timm_locality_aware_transformer import BlockLAI,VisionTransformerLAI
+        timm_model = True
+        old_model = timm.models.vision_transformer.VisionTransformer(img_size=args.img_size,
+                                                         patch_size=args.patch_size,
+                                                         in_chans=args.in_chans,
+                                                         num_classes = args.num_classes,
+                                                         embed_dim=args.embed_dim,
+                                                         depth=args.num_layers,
+                                                         num_heads=args.num_heads,
+                                                         mlp_ratio = args.dim_feedforward // args.embed_dim,
+                                                         attn_drop_rate=args.dropout,
+                                                         )
+        
+
+        model=VisionTransformerLAI(img_size=args.img_size,
+                                   patch_size=args.patch_size,
+                                   in_chans=args.in_chans,
+                                   num_classes = args.num_classes,
+                                   embed_dim=args.embed_dim,
+                                   depth=args.num_layers,
+                                   num_heads=args.num_heads,
+                                   mlp_ratio = args.dim_feedforward // args.embed_dim,
+                                   attn_drop_rate=args.dropout,
+                                   mask_epochs=list(args.locality_aware_init)
+                                                         )
+        model.load_state_dict(old_model.state_dict(),strict=False)
+            
+
     elif args.attention == 'deformable_transformer':
         print('Not implemented')
         pass
@@ -314,6 +365,7 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
          'learning_rate':[]}
     max_norm= clip_norm
     model.train()
+    
     #print(model)
     for epoch in range(epochs):
         epoch_loss = 0
@@ -322,7 +374,10 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         for data, label in tqdm(train_loader):
             data = data.to(args.device)
             label = label.to(args.device)
-            output = model(data)
+            if args.locality_aware_init is not None:
+                output = model(data,epoch)
+            else:
+                output = model(data)
             #print(output.shape,label.shape)
             loss = criterion(output, label)
     
@@ -344,7 +399,10 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
             for data, label in valid_loader:
                 data = data.to(args.device)
                 label = label.to(args.device)
-                val_output = model(data)
+                if args.locality_aware_init is not None:
+                    val_output=model(data,epoch)
+                else:    
+                    val_output = model(data)
                 val_loss = criterion(val_output, label)
     
                 acc = (val_output.argmax(dim=1) == label).float().mean()
@@ -396,8 +454,7 @@ def main(args):
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"n_parameters={n_parameters}")
     criterion.to(args.device)
-    ''' add args'''
-    
+    print(f'args:{args}')
     print('Start training')
     start_time=time.time()
     training(model,criterion,optimizer,scheduler,train_loader,valid_loader,args.epochs,args.clip_norm)    

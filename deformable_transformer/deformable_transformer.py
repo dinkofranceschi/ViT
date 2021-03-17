@@ -1,5 +1,7 @@
-''' Alternative implementation of deformable attention from
-https://arxiv.org/abs/2010.04159 '''
+'''
+Alternative implementation of deformable attention from
+https://arxiv.org/abs/2010.04159 
+'''
 
 from torch import nn
 import torch
@@ -80,7 +82,7 @@ class MSDeformAttn(nn.Module):
             raise ValueError(
                 'Last dim of reference_points must be 2 or 4, but get {} instead.'.format(reference_points.shape[-1]))
         
-        '''MSDA not available ?'''
+        '''MSDA not available?'''
         output = None #Import MultiScaleDeformableAttention
         
         output = self.output_proj(output)
