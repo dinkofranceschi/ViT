@@ -8,6 +8,8 @@ To-do list:
 - [x] Implementing timm versions (performer and transformer for 224x224 16-patch-size images) 
 - [ ] Code and test deformable attention
 - [ ] Code and test locality-aware initialization
+    - [x] Transformer
+    - [ ] Performer
 - [ ] Code and test DeBERTa attention
 - [ ] Implement performer in the above
 - [ ] Usage
