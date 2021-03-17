@@ -44,7 +44,7 @@ class AttentionLAI(nn.Module):
         self.mask_10 = None 
     def forward(self, x, epoch):
         B, N, C = x.shape
-        print(N)
+        #print(N)
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]   # make torchscript happy (cannot use tensor as tuple)
 
@@ -53,19 +53,19 @@ class AttentionLAI(nn.Module):
             if epoch < self.mask_epochs[-1]:
                 if epoch < self.mask_epochs[-4]:
                     if self.mask_4 is None:
-                        self.mask_4 = get_attn_mask(N,4)
+                        self.mask_4 = get_attn_mask(N,8)
                     mask = self.mask_4
                 elif epoch < self.mask_epochs[-3]:
                     if self.mask_6 is None:
-                        self.mask_6= get_attn_mask(N,6)
+                        self.mask_6= get_attn_mask(N,12)
                     mask = self.mask_6
                 elif epoch < self.mask_epochs[-2]:
                     if self.mask_8 is None:
-                        self.mask_8 = get_attn_mask(N,8)
+                        self.mask_8 = get_attn_mask(N,18)
                     mask = self.mask_8
                 else:
                     if self.mask_10 is None:
-                        self.mask_10 = get_attn_mask(N,10)
+                        self.mask_10 = get_attn_mask(N,20)
                     mask = self.mask_10
                 attn = attn.masked_fill(mask.to(attn.get_device()) == 0, -1e9)
             else:
@@ -118,7 +118,8 @@ class VisionTransformerLAI(VisionTransformer):
                          attn_drop_rate=attn_drop_rate,
                          drop_path_rate=drop_path_rate,
                          hybrid_backbone=hybrid_backbone,
-                         norm_layer=norm_layer)
+                         norm_layer=norm_layer,
+                         )
         norm_layer=norm_layer or partial(nn.LayerNorm, eps=1e-6)
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]
         self.blocks = nn.ModuleList([
