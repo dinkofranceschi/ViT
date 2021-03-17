@@ -7,9 +7,14 @@ To-do list:
 - [x] Finishing the logging code and wandb logging
 - [x] Implementing timm versions (performer and transformer for 224x224 16-patch-size images) 
 - [ ] Code and test deformable attention
+    - [ ] Transformer
+    - [ ] Performer
 - [ ] Code and test locality-aware initialization
+    - [x] Transformer
+    - [ ] Performer
 - [ ] Code and test DeBERTa attention
-- [ ] Implement performer in the above
+    - [ ] Transformer
+    - [ ] Performer
 - [ ] Usage
 
 # Results
