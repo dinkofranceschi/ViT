@@ -30,7 +30,7 @@ How to implement it in Performers FAVOR+?
 Comparison between Locality-aware init vit with regular vit:
 
 ![vit_lai](https://github.com/dinkofranceschi/ViT/blob/main/figures/performance_lai.png)
-
+<a href="url"><img src="https://github.com/dinkofranceschi/ViT/blob/main/figures/performance_lai.png" align="left" height="48" width="48" ></a>
 
 # Usage
 
