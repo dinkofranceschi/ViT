@@ -17,6 +17,14 @@ To-do list:
     - [ ] Performer
 - [ ] Usage
 
+# Questions
+
+The locality-aware initialization produces masks like the following:
+
+![alt text](https://github.com/dinkofranceschi/ViT/blob/main/figures/lai_init_mask.png)
+
+How to implement it in Performers FAVOR+?
+
 # Results
 
 # Usage
