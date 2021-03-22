@@ -149,4 +149,22 @@ class VisionTransformerLAI(VisionTransformer):
         x = self.forward_features(x,epoch)
         x = self.head(x)
         return x
+    
+def plot_attn_mask(L=65,w=20):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    plt.imshow(get_attn_mask(L,w).cpu().squeeze().squeeze().detach().numpy(),cmap='summer')
+    plt.axis('off')
+    plt.title('Locality-aware intialization mask')
+    
+    plt.plot(np.linspace(0,L),np.linspace(0,L),'k--',linewidth=0.7)
+    plt.annotate(text='', xy=(w,0), xytext=(0,0), arrowprops=dict(arrowstyle='<->'))
+    plt.text(w//2-1, 3, 'w')
+    
+    plt.annotate(text='', xy=(L-1,L-4), xytext=(0,L-4), arrowprops=dict(arrowstyle='<->'))
+    plt.text((L-1)//2-1 , L-6,'L')
+    
+    plt.annotate(text='', xy=(w+(L-w)//2+L//10,L-w-(L-w)//2-L//10), xytext=(w+(L-w)//2,L-w-(L-w)//2), arrowprops=dict(arrowstyle='->'))
+    plt.text(w+(L-w)//2+L//10,L-w-(L-w)//2-L//10,'$\Delta$ Epoch')
+    plt.show()
         
