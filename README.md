@@ -17,6 +17,13 @@ To-do list:
     - [ ] Performer
 - [ ] Usage
 
+# Questions
+
+The locality-aware initialization produces masks like the following:
+
+![alt text](https://github.com/dinkofranceschi/ViT/figures/lai_init_mask.png)
+
+
 # Results
 
 # Usage
