@@ -25,11 +25,6 @@ The locality-aware initialization produces masks like the following:
 
 How to implement it in Performers FAVOR+?
 
--Idea: Break the matrix Q and K in four chunks, apply the diagonal mask of performer in the left lower and right upper chunks
-
-$\begin{matrix}
-1&2&3
-\end{matrix}$
 # Results
 
 Comparison between Locality-aware init vit with regular vit:
