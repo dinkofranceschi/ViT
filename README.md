@@ -23,7 +23,7 @@ To-do list:
 - [ ] Code and test disentangled attention
     - [ ] Transformer
         - [x] Making it compatible
-        - [ ] Adjusting the positions
+        - [ ] Adjusting the positions (read the paper again to make sure)
         - [ ] Testing   
     - [ ] Performer
         - [ ] Evaluate compatibility
