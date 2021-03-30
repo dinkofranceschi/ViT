@@ -8,14 +8,18 @@ To-do list:
 - [x] Implementing timm versions (performer and transformer for 224x224 16-patch-size images) 
 - [ ] Code and test deformable attention
     - [ ] Transformer
+        - [ ] Convert from C to Python? 
     - [ ] Performer
 - [ ] Code and test locality-aware initialization
     - [x] Transformer
     - [ ] Performer
+        - [ ] Implement the masking
+        - [ ] Testing 
 - [ ] Code and test DeBERTa attention
     - [ ] Transformer
         - [x] Making it compatible
-        - [ ] Adjusting the positions   
+        - [ ] Adjusting the positions
+        - [ ] Testing   
     - [ ] Performer
 - [ ] Usage
 
