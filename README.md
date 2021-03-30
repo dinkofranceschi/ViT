@@ -10,8 +10,13 @@ To-do list:
     - [ ] Transformer
         - [ ] Convert from C to Python? 
     - [ ] Performer
+        - [ ] Evaluate compatibility
+        - [ ] Adapt it
+        - [ ] Testing 
 - [ ] Code and test locality-aware initialization
     - [x] Transformer
+        - [x] Implemented
+        - [x] Tested
     - [ ] Performer
         - [ ] Implement the masking
         - [ ] Testing 
@@ -21,6 +26,9 @@ To-do list:
         - [ ] Adjusting the positions
         - [ ] Testing   
     - [ ] Performer
+        - [ ] Evaluate compatibility
+        - [ ] Adapt it
+        - [ ] Testing  
 - [ ] Usage
 
 # Questions
