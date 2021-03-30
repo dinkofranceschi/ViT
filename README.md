@@ -15,7 +15,7 @@ To-do list:
     - [ ] Performer
         - [ ] Implement the masking
         - [ ] Testing 
-- [ ] Code and test DeBERTa attention
+- [ ] Code and test disentangled attention
     - [ ] Transformer
         - [x] Making it compatible
         - [ ] Adjusting the positions
