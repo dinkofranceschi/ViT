@@ -14,6 +14,8 @@ To-do list:
     - [ ] Performer
 - [ ] Code and test DeBERTa attention
     - [ ] Transformer
+        - [x] Making it compatible
+        - [ ] Adjusting the positions   
     - [ ] Performer
 - [ ] Usage
 
