@@ -16,7 +16,7 @@ To-do list:
 - [ ] Code and test locality-aware initialization
     - [x] Transformer
         - [x] Implemented
-        - [x] Tested
+        - [x] Testing
     - [ ] Performer
         - [ ] Implement the masking
         - [ ] Testing 
