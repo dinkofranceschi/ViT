@@ -18,7 +18,7 @@ To-do list:
         - [x] Implemented
         - [x] Testing
     - [ ] Performer
-        - [ ] Implement the masking
+        - [ ] Implement the masking (Krzysztof)
         - [ ] Testing 
 - [ ] Code and test disentangled attention
     - [ ] Transformer
