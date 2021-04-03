@@ -68,8 +68,8 @@ def get_args_parser():
 
 
 def build_model(args):
-    timm_model=False
     if args.attention == 'transformer':
+        timm_model=False
         transformer=Transformer(
             d_model= args.embed_dim,
             dropout=args.dropout,
@@ -79,6 +79,7 @@ def build_model(args):
             normalize_before=True,
         )
     elif args.attention == 'performer':
+        timm_model=False
         transformer = Performer(
             d_model= args.embed_dim,
             dropout=args.dropout,
@@ -138,9 +139,9 @@ def build_model(args):
             elem.attn = PerformerAttention(attention,args.embed_dim,num_heads=attention.num_heads,n_orf=args.num_orf,kernel=args.kernel,attn_drop=args.dropout)
             
     elif args.attention == 'transformer_timm_lai':
+        timm_model = True
         print('Building ViT timm with locality-aware-intialization')
         from timm_classes.timm_locality_aware_transformer import BlockLAI,VisionTransformerLAI
-        timm_model = True
         old_model = timm.models.vision_transformer.VisionTransformer(img_size=args.img_size,
                                                          patch_size=args.patch_size,
                                                          in_chans=args.in_chans,
@@ -167,6 +168,24 @@ def build_model(args):
         model.load_state_dict(old_model.state_dict(),strict=False)
             
 
+    elif args.attention == 'disentangled_transformer':
+        timm_model=False
+        from disentangled_transformer.disentangled_transformer import DisentangledTransformer
+        print('Building Disentangled Attention')
+        transformer = DisentangledTransformer(
+            d_model= args.embed_dim,
+            dropout=args.dropout,
+            nhead=args.num_heads,
+            dim_feedforward=args.dim_feedforward,
+            num_encoder_layers=args.num_layers,
+            normalize_before=True,
+            pos_att_type='c2p|p2c',
+            position_buckets=-1,
+            max_relative_positions=-1,
+            max_position_embeddings=args.embed_dim,
+            relative_attention=True,
+        )
+        
     elif args.attention == 'deformable_transformer':
         print('Not implemented')
         pass
