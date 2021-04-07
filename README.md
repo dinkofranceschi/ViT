@@ -43,9 +43,9 @@ How to implement it in Performers FAVOR+?
 
 Comparison between Locality-aware init vit with regular vit:
 
-### CIFAR10 from scratch (Locality aware init vs Disentangled vs Regular ViT)
+#### CIFAR10 from scratch (Locality aware init vs Disentangled vs Regular ViT)
 ![vit_cifar10](https://github.com/dinkofranceschi/ViT/blob/main/figures/cifar10.png)
-### CIFAR100 from scratch (Locality aware init vs Disentangled vs Regular ViT)
+#### CIFAR100 from scratch (Locality aware init vs Disentangled vs Regular ViT)
 ![vit_cifar100](https://github.com/dinkofranceschi/ViT/blob/main/figures/cifar100.png)
 ## Usage
 
