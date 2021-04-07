@@ -2,7 +2,7 @@
 Applying deformable multiheadattention to ViT architecture
 
 
-To-do list:
+## To-do list:
 
 - [x] Finishing the logging code and wandb logging
 - [x] Implementing timm versions (performer and transformer for 224x224 16-patch-size images) 
@@ -31,7 +31,7 @@ To-do list:
         - [ ] Testing  
 - [ ] Usage
 
-# Questions
+## Questions
 
 The locality-aware initialization produces masks like the following:
 
@@ -39,17 +39,18 @@ The locality-aware initialization produces masks like the following:
 
 How to implement it in Performers FAVOR+?
 
-# Results
+## Results
 
 Comparison between Locality-aware init vit with regular vit:
 
-![vit_lai](https://github.com/dinkofranceschi/ViT/blob/main/figures/performance_lai.png)
+### CIFAR10 from scratch (Locality aware init vs Disentangled vs Regular ViT)
 ![vit_cifar10](https://github.com/dinkofranceschi/ViT/blob/main/figures/cifar10.png)
+### CIFAR100 from scratch (Locality aware init vs Disentangled vs Regular ViT)
 ![vit_cifar100](https://github.com/dinkofranceschi/ViT/blob/main/figures/cifar100.png)
-# Usage
+## Usage
 
 
-# Links
+## Links
 
 - https://github.com/fundamentalvision/Deformable-DETR (deformable multscaleattention)
 - https://github.com/microsoft/DeBERTa (disentangled attention)
