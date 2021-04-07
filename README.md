@@ -21,7 +21,7 @@ To-do list:
         - [ ] Implement the masking (Krzysztof)
         - [ ] Testing 
 - [ ] Code and test disentangled attention
-    - [ ] Transformer
+    - [x] Transformer
         - [x] Making it compatible
         - [x] Adjusting the positions (read the paper again to make sure)
         - [x] Testing   
@@ -44,7 +44,8 @@ How to implement it in Performers FAVOR+?
 Comparison between Locality-aware init vit with regular vit:
 
 ![vit_lai](https://github.com/dinkofranceschi/ViT/blob/main/figures/performance_lai.png)
-
+![vit_cifar10](https://github.com/dinkofranceschi/ViT/blob/main/figures/cifar10.png)
+![vit_cifar100](https://github.com/dinkofranceschi/ViT/blob/main/figures/cifar100.png)
 # Usage
 
 
