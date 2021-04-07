@@ -37,6 +37,8 @@ def get_args_parser():
     '''Model parameters'''
     parser.add_argument('--attention',default='performer',type=str,
                         help='Type of attention among Performer,Deformable Transformer...')
+    parser.add_argument('--de_attn_type', default='c2p|p2c', type=str,
+                        help='Type of disentangled attention')
     parser.add_argument('--patch_size',default=4,type=int)
     parser.add_argument('--num_layers',default=4,type=int,
                         help='number of encoders')
@@ -179,7 +181,7 @@ def build_model(args):
             dim_feedforward=args.dim_feedforward,
             num_encoder_layers=args.num_layers,
             normalize_before=True,
-            pos_att_type='c2p|p2c',
+            pos_att_type=args.de_attn_type,
             position_buckets=-1,
             max_relative_positions=-1,
             max_position_embeddings=args.embed_dim,
