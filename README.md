@@ -23,7 +23,7 @@ Applying deformable multiheadattention to ViT architecture
 - [ ] Code and test disentangled attention
     - [x] Transformer
         - [x] Making it compatible
-        - [x] Adjusting the positions (read the paper again to make sure)
+        - [x] Adjusting the positions
         - [x] Testing   
     - [ ] Performer
         - [ ] Evaluate compatibility
