@@ -188,6 +188,27 @@ def build_model(args):
             relative_attention=True,
         )
         
+    elif args.attention == 'disentangled_performer':
+        timm_model=False
+        from disentangled_transformer.disentangled_transformer import DisentangledTransformer
+        print('Building Disentangled Performer Attention')
+        transformer = DisentangledTransformer(
+            d_model= args.embed_dim,
+            dropout=args.dropout,
+            nhead=args.num_heads,
+            dim_feedforward=args.dim_feedforward,
+            num_encoder_layers=args.num_layers,
+            normalize_before=True,
+            pos_att_type=args.de_attn_type,
+            position_buckets=-1,
+            max_relative_positions=-1,
+            max_position_embeddings=args.embed_dim,
+            relative_attention=True,
+            performers=True,
+            norf=args.num_orf,
+            kernel=args.kernel
+        )
+        
     elif args.attention == 'deformable_transformer':
         print('Not implemented')
         pass
