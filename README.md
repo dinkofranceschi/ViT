@@ -40,11 +40,12 @@ The locality-aware initialization produces masks like the following:
 How to implement it in Performers FAVOR+?
 
 ## Experiments
-| a       | a           | a |
+
+| Models      | Top1-Acc(%)        | Params (M) |
 | ------------- |:-------------:| -----:|
-| col 3 is      | right-aligned | $1600 |
-| col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |
+| ViT-S/16     | 78.1 | 48.6 |
+| ViT-B/16      | 79.8    |   86.4 |
+| ViT-L/16 | 81.1  | 304.3 |
 
 ## Results
 
