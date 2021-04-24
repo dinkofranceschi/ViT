@@ -52,9 +52,10 @@ Comparison between Locality-aware init vit with regular vit:
 
 ## Links
 
-- https://github.com/fundamentalvision/Deformable-DETR (deformable multscaleattention)
-- https://github.com/microsoft/DeBERTa (disentangled attention)
-- https://github.com/VITA-Group/TransGAN (locality aware initialization)
-- https://github.com/google-research/google-research/tree/master/performer (performer tensorflow implementation)
-- https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py (timm library)
-- https://wandb.ai/ltononro/Deformable%20ViT (wandb logging)
+
+- [Deformable MultiScale Attention](https://github.com/fundamentalvision/Deformable-DETR)
+- [Disentangeld Attention](https://github.com/microsoft/DeBERTa)
+- [Locality-aware initialization](https://github.com/VITA-Group/TransGAN)
+- [Performer tensorflow](https://github.com/google-research/google-research/tree/master/performer)
+- [Timm library](https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py )
+- [Wandb logging](https://wandb.ai/ltononro/Deformable%20ViT)
