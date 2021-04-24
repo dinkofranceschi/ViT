@@ -42,7 +42,7 @@ How to implement it in Performers FAVOR+?
 ## Experiments
 
 Models description:
-| Models      | Layers      | Hidden size D | MLP size | Heads | Params |
+| Models      | Layers      | Hidden size | MLP size | Heads | Params |
 | ------------- |:-------------:| -----:|-----:|-----:|-----:|
 | ViT-S/16[1]     | 78.1 | 768 | 3072 | 12| 48.6|
 | ViT-B/16[1]      | 79.8    | 1024    | 4096| 16| 86.4|
@@ -55,6 +55,7 @@ Training on ImageNet from scratch:
 | ViT-B/16[1]      | 79.8    |   86.4 |
 | ViT-L/16[1] | 81.1  | 304.3 |
 
+Training schedule
 
 ## Results
 
