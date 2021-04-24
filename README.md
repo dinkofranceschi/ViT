@@ -41,6 +41,7 @@ How to implement it in Performers FAVOR+?
 
 ## Experiments
 
+Training on ImageNet from scratch
 | Models      | Top1-Acc(%)        | Params (M) |
 | ------------- |:-------------:| -----:|
 | ViT-S/16     | 78.1 | 48.6 |
@@ -67,3 +68,9 @@ Comparison between Locality-aware init vit with regular vit:
 - [Performer tensorflow](https://github.com/google-research/google-research/tree/master/performer)
 - [Timm library](https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/vision_transformer.py )
 - [Wandb logging](https://wandb.ai/ltononro/Deformable%20ViT)
+
+
+## References
+
+[1] [An image is worth 16x16 words:
+Transformers for image recognition at scale](https://arxiv.org/abs/2010.11929)
