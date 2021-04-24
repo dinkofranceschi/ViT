@@ -39,6 +39,13 @@ The locality-aware initialization produces masks like the following:
 
 How to implement it in Performers FAVOR+?
 
+## Experiments
+| a       | a           | a |
+| ------------- |:-------------:| -----:|
+| col 3 is      | right-aligned | $1600 |
+| col 2 is      | centered      |   $12 |
+| zebra stripes | are neat      |    $1 |
+
 ## Results
 
 Comparison between Locality-aware init vit with regular vit:
