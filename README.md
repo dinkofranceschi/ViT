@@ -41,12 +41,20 @@ How to implement it in Performers FAVOR+?
 
 ## Experiments
 
-Training on ImageNet from scratch
+Models description:
+| Models      | Layers      | Hidden size D | MLP size | Heads | Params |
+| ------------- |:-------------:| -----:|-----:|-----:|-----:|
+| ViT-S/16[1]     | 78.1 | 48.6 | a| a| a|
+| ViT-B/16[1]      | 79.8    |   86.4 | a| a| a|
+| ViT-L/16[1] | 81.1  | 304.3 | a| a| a|
+
+Training on ImageNet from scratch:
 | Models      | Top1-Acc(%)        | Params (M) |
 | ------------- |:-------------:| -----:|
-| ViT-S/16     | 78.1 | 48.6 |
-| ViT-B/16      | 79.8    |   86.4 |
-| ViT-L/16 | 81.1  | 304.3 |
+| ViT-S/16[1]     | 78.1 | 48.6 |
+| ViT-B/16[1]      | 79.8    |   86.4 |
+| ViT-L/16[1] | 81.1  | 304.3 |
+
 
 ## Results
 
