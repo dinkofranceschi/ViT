@@ -20,6 +20,7 @@ Applying deformable multiheadattention to ViT architecture
     - [ ] Performer
         - [ ] Implement the masking (Krzysztof)
         - [ ] Testing 
+    - [ ] Trainable deformable LAI?
 - [ ] Code and test disentangled attention
     - [x] Transformer
         - [x] Making it compatible
@@ -30,6 +31,10 @@ Applying deformable multiheadattention to ViT architecture
         - [ ] Adapt it
         - [ ] Testing  
 - [ ] Usage
+- [ ] Define #GPUS and GPU
+    - [ ] Define models we are going to train
+    - [ ] Estimate time and cost for training ImageNet and transfer CIFAR
+- [ ] Research optimal traninig schedules for ImageNet and transfer CIFAR(e.g. cosine annealing)
 
 ## Questions
 
@@ -54,6 +59,16 @@ Training on ImageNet from scratch:
 | ViT-S/16[1]     | 78.1 | 48.6 |
 | ViT-B/16[1]      | 79.8    |   86.4 |
 | ViT-L/16[1] | 81.1  | 304.3 |
+| ViT-LAI-S |X|X|
+| ViT-LAI-B |X|X|
+| ViT-LAI-L |X|X|
+| ViT-Dis-S |X|X|
+| ViT-Dis-B |X|X|
+| ViT-Dis-L |X|X|
+| ViT-DisLAI-S |X|X|
+| ViT-DisLAI-B |X|X|
+| ViT-DisLAI-L |X|X|
+
 
 Training schedule
 
