@@ -47,7 +47,7 @@ How to implement it in Performers FAVOR+?
 ## Experiments
 
 Models description:
-| Models      | Layers      | Hidden size | MLP size | Heads | Params |
+| Models      | Layers      | Hidden size | MLP size | Heads | Params (M) |
 | ------------- |:-------------:| -----:|-----:|-----:|-----:|
 | ViT-S/16[1]     | 12 | 768 | 3072 | 12| 48.6|
 | ViT-B/16[1]      | 24    | 1024    | 4096| 16| 86.4|
