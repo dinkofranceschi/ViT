@@ -49,9 +49,9 @@ How to implement it in Performers FAVOR+?
 Models description:
 | Models      | Layers      | Hidden size | MLP size | Heads | Params |
 | ------------- |:-------------:| -----:|-----:|-----:|-----:|
-| ViT-S/16[1]     | 78.1 | 768 | 3072 | 12| 48.6|
-| ViT-B/16[1]      | 79.8    | 1024    | 4096| 16| 86.4|
-| ViT-L/16[1] | 81.1  | 1280 | 5120| 16| 304.3|
+| ViT-S/16[1]     | 12 | 768 | 3072 | 12| 48.6|
+| ViT-B/16[1]      | 24    | 1024    | 4096| 16| 86.4|
+| ViT-L/16[1] | 32  | 1280 | 5120| 16| 304.3|
 
 Training on ImageNet from scratch:
 | Models      | Top1-Acc(%)        | Params (M) |
