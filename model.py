@@ -131,7 +131,7 @@ class Transformer(nn.Module):
         #query_embed = query_embed.unsqueeze(1).repeat(1, bs, 1) #num_queries x d -> num_queries x 1 x d -> num_queries x batch_size x d
         #print(src.shape)
         memory = self.encoder(src, pos=pos_embed)
-        print(f'memory_shape (out_enc) = {memory.shape}')
+        #print(f'memory_shape (out_enc) = {memory.shape}')
         return memory
 
 class TransformerEncoder(nn.Module):

@@ -36,7 +36,6 @@ def get_args_parser():
                         help='List of epochs for locality aware initialization, it only works for timm models or with performers')
     parser.add_argument('--model',default=None,type=str,
                         help='Types of model: ViT-Small, ViT-Base, ViT-Large')
-    
     parser.add_argument('--dataparallel', default=None, type=str,
                         help='GPU Indexes')
     '''Model parameters'''
@@ -514,8 +513,14 @@ def save_on_master(*args, **kwargs):
     torch.save(*args, **kwargs)
 
 def main(args):
+
     train_loader,valid_loader=build_dataset(args) 
     model,criterion,optimizer,scheduler = build_model(args)
+    if args.dataparallel is not None:
+        args.device='cuda'
+        device_ids=[int(elem) for elem in args.dataparallel.split(',')]
+        print(f"Using GPU devices {device_ids}")
+        model=nn.DataParallel(model,device_ids=device_ids)
     model.to(args.device)
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"n_parameters={n_parameters}")
