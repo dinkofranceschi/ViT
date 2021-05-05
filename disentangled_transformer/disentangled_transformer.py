@@ -24,7 +24,9 @@ class DisentangledTransformer(nn.Module):
                  max_position_embeddings=512,
                  performers=False,
                  norf=32,
-                 kernel='softmax'
+                 kernel='softmax',
+                 lai=False,
+                 mask_epochs=None,
                  ):
         super().__init__()
         
@@ -39,8 +41,10 @@ class DisentangledTransformer(nn.Module):
                                              max_relative_positions=max_relative_positions,
                                              max_position_embeddings=max_position_embeddings,
                                              performers=performers,
+                                             lai=lai,
+                                             mask_epochs=mask_epochs,
                                              norf=norf,
-                                             kernel=kernel,
+                                             kernel=kernel
                                             )
 
         
@@ -57,14 +61,14 @@ class DisentangledTransformer(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
-    def forward(self, src, pos_embed):
+    def forward(self, src, pos_embed,epoch=None):
         
         bs, hw, d = src.shape 
         #src = src.permute(1, 0, 2)  #-> BS x N x d -> N x BS x d
         
         pos_embed = pos_embed.permute(1, 0, 2) # Same for positional embeddings 1 x num_patchs+1 x d  -> num_patches+1 x 1 x d
 
-        memory = self.encoder(src, pos=pos_embed)
+        memory = self.encoder(src, pos=pos_embed,epoch=epoch)
 
         return memory.permute(1,0,2)
     
@@ -107,15 +111,17 @@ class DisentangledEncoder(nn.Module):
           relative_pos = build_relative_position(q, hidden_states.size(-2), bucket_size = self.position_buckets, max_position=self.max_relative_positions)
         return relative_pos
     def forward(self, src,
-                pos: Optional[Tensor] = None):
+                pos: Optional[Tensor] = None,epoch=None):
         output = src
         
         relative_pos=self.get_rel_pos(src)
         rel_embeddings=self.get_rel_embedding()
         
+        #print(output.shape,pos.shape)
+        #output=output+pos.permute(1,0,2)
         
         for layer in self.layers:
-            output = layer(output,relative_pos=relative_pos,rel_embeddings=rel_embeddings,pos_embed=pos)            
+            output = layer(output,relative_pos=relative_pos,rel_embeddings=rel_embeddings,pos_embed=pos,epoch=epoch)            
         if self.norm is not None:
             output = self.norm(output)
 
@@ -128,6 +134,8 @@ class DisentangledEncoderLayer(nn.Module):
                  max_position_embeddings=512,
                  dim_feedforward=2048,
                  performers=False,
+                 lai=False,
+                 mask_epochs=None,
                  norf=32,
                  kernel='softmax'):
         super().__init__()
@@ -140,6 +148,12 @@ class DisentangledEncoderLayer(nn.Module):
                                                 kernel=kernel,
                                                 norf=norf,
                                                 )
+        elif lai:
+            self.dis_attn=DisentangledLAISelfAttention(d_model=d_model,nhead=nhead,dropout=dropout,
+                                                relative_attention=relative_attention,pos_att_type=pos_att_type,
+                                                position_buckets=position_buckets,max_relative_positions=max_relative_positions,
+                                                max_position_embeddings=max_position_embeddings,
+                                                mask_epochs=mask_epochs)
         else:
             self.dis_attn=DisentangledSelfAttention(d_model=d_model,nhead=nhead,dropout=dropout,
                                                 relative_attention=relative_attention,pos_att_type=pos_att_type,
@@ -187,18 +201,24 @@ class DisentangledEncoderLayer(nn.Module):
                 relative_pos=None,
                 rel_embeddings=None,
                 query=None,
-                pos_embed=None):
+                pos_embed=None,
+                epoch=None):
         
         # q=self.query_proj(src) if query is None else self.query_proj(query) 
         # k=self.key_proj(src)
         # value=self.value_proj(src)
         q,k,value=src,src,src
 
-        
-        output = self.dis_attn(q,k,value,
+        if epoch is None:
+            output = self.dis_attn(q,k,value,
                                relative_pos=relative_pos,
                                rel_embeddings=rel_embeddings,pos_embed=pos_embed)
         
+        else:
+            output = self.dis_attn(q,k,value,
+                               relative_pos=relative_pos,
+                               rel_embeddings=rel_embeddings,pos_embed=pos_embed,epoch=epoch)
+            
         self_output, att_matrix, att_logits_=output['hidden_states'], output['attention_probs'], output['attention_logits']
         
         attn_output = self.forward_self_output(self_output,q)
@@ -209,14 +229,14 @@ class DisentangledEncoderLayer(nn.Module):
                 relative_pos=None,
                 rel_embeddings=None,
                 query=None,
-                pos_embed=None):
+                pos_embed=None,epoch=None):
         
         attn_output= self.forward_attention(
                 src,
                 relative_pos=relative_pos,
                 rel_embeddings=rel_embeddings,
                 query=query,
-                pos_embed=pos_embed)
+                pos_embed=pos_embed,epoch=epoch)
         
         out = self.forward_intermediate(attn_output)
         
@@ -498,7 +518,7 @@ class DisentangledSelfAttentionPerformer(nn.Module):
             scale_factor += 1
         if 'p2p' in self.pos_att_type:
             scale_factor += 1
-        scale = math.sqrt(q_perf.size(-1)*scale_factor)
+        #scale = math.sqrt(q_perf.size(-1)*scale_factor)
         #attention_scores = torch.bmm(query_layer, key_layer.transpose(-1, -2))/scale
         
         #Regular performer matmult CORRECT SCALES LATER MAYBE USE =!= ORF for cp and pc
@@ -512,7 +532,7 @@ class DisentangledSelfAttentionPerformer(nn.Module):
             key_prime=self.relu_kernel_transformation(k_perf,False) # B L H M
             query_prime=self.relu_kernel_transformation(q_perf,True) # B L H M
         
-    
+        '''
         kv=torch.einsum('blhm,blhd->bhmd',key_prime,value_perf)
         qkv=torch.einsum('blhm,bhmd->blhd',query_prime,kv)
         
@@ -556,7 +576,30 @@ class DisentangledSelfAttentionPerformer(nn.Module):
         
         PC = out.flatten(-2)
         
-        context_layer = CC + CP + PC
+        
+        w_cc=4
+        w_cp=2
+        w_pc=2
+        context_layer = w_cc*CC + w_cp*CP + w_pc*PC/(w_cc+w_cp+w_pc)
+        '''
+        
+        Pq,Pk= self.disentangled_attention_perf_bias(q, k, relative_pos, rel_embeddings, scale_factor,pos_embed)
+        Pq=Pq.expand(*key_prime.shape)
+        Pk=Pk.expand(*key_prime.shape)
+        
+        new_Q=Pq+query_prime
+        new_K=Pk+key_prime
+        
+        kv=torch.einsum('blhm,blhd->bhmd',new_K,value_perf)
+        qkv=torch.einsum('blhm,bhmd->blhd',new_Q,kv)
+        
+        #Denominator
+        ks_sum=torch.einsum("blhm,l->bhm",new_K,torch.ones(new_K.shape[1],device=dev))
+        D=torch.einsum("blhm,bhm->blh", new_Q, ks_sum)
+        D=D.unsqueeze(-1) #BxLxH->BxLxHx1
+        
+        out=(qkv/D)  #BxLxHxd
+        context_layer=out.flatten(-2) #BxLxHxd->BxLxHd
         
         context_layer = self.dropout(context_layer)
 
@@ -741,3 +784,227 @@ class DisentangledSelfAttentionPerformer(nn.Module):
             q *= d.sign()
         return q.t()
     
+    
+class DisentangledLAISelfAttention(nn.Module):
+    def __init__(self, d_model=512,nhead=8,dropout=0.1,
+                 relative_attention=True, pos_att_type='c2p|p2c',
+                 position_buckets=-1,max_relative_positions=-1,
+                 max_position_embeddings=512,
+                 mask_epochs=None):
+        '''
+        param pos_att_type: (str) relative position attention e.g. 'p2c|c2p','c2p|p2p','p2p' c2c is always implicit
+        param relative_attention (bool) use relative position encoding
+        param max_position_embeddings (int) maximum sequence length
+        param max_relative_positions (int) range of relative positions
+        param position_buckets (int)
+            
+        '''
+        super().__init__()
+        
+        
+        self.mask_4 = None
+        self.mask_6 = None
+        self.mask_8 = None
+        self.mask_10 = None 
+        
+        self.mask_epochs = mask_epochs
+        
+        self.num_attention_heads = nhead
+        _attention_head_size = int(d_model / nhead)
+        self.attention_head_size =  _attention_head_size
+        self.all_head_size = self.num_attention_heads * self.attention_head_size
+
+        self.pos_att_type = [x.strip() for x in pos_att_type.lower().split('|')] # c2p|p2c
+        self.relative_attention = relative_attention
+        
+        self.share_att_key=True
+
+        self.query_proj = nn.Linear(d_model, self.all_head_size, bias=True)
+        self.key_proj = nn.Linear(d_model, self.all_head_size, bias=True)
+        self.value_proj = nn.Linear(d_model, self.all_head_size, bias=True)
+        
+        if self.relative_attention:
+            self.position_buckets = position_buckets
+            self.max_relative_positions = max_relative_positions
+            if self.max_relative_positions <1:
+                self.max_relative_positions = max_position_embeddings
+            self.pos_ebd_size = self.max_relative_positions
+            if self.position_buckets>0:
+                self.pos_ebd_size = self.position_buckets
+                # For backward compitable
+
+            self.pos_dropout = nn.Dropout(dropout)
+
+            if 'c2p' in self.pos_att_type or 'p2p' in self.pos_att_type:
+                self.pos_key_proj = nn.Linear(d_model, self.all_head_size, bias=True)
+            if 'p2c' in self.pos_att_type or 'p2p' in self.pos_att_type:
+                self.pos_query_proj = nn.Linear(d_model, self.all_head_size)
+
+        self.dropout = nn.Dropout(dropout)
+
+    def transpose_for_scores(self, x, attention_heads):
+        new_x_shape = x.size()[:-1] + (attention_heads, -1)
+        x = x.view(*new_x_shape)
+        return x.permute(0, 2, 1, 3).contiguous().view(-1, x.size(1), x.size(-1))
+
+
+    def forward(self,q,k,value,relative_pos=None,rel_embeddings=None,query=None,pos_embed=None,epoch=0):
+        #Bs,N,d we want to receive this
+        B, N, C = q.shape
+        q=self.query_proj(q) if query is None else self.query_proj(query) 
+        k=self.key_proj(k)
+        value=self.value_proj(value)
+       #print(f'query_shape={q.shape}') #BsxLxd
+        query_layer = self.transpose_for_scores(q, self.num_attention_heads)
+        #print(f'query_shape={query_layer.shape}') #Bs*n_heads x N x head_dim
+       
+        key_layer = self.transpose_for_scores(k, self.num_attention_heads)
+        #print(f'key_shape={key_layer.transpose(-1,-2).shape}')
+        value_layer = self.transpose_for_scores(value, self.num_attention_heads)
+        #print(f'v_shape={value_layer.shape}')
+        rel_att = None  #initialization of relative attention
+        # Take the dot product between "query" and "key" to get the raw attention scores.
+        scale_factor = 1
+        if 'c2p' in self.pos_att_type:
+            scale_factor += 1
+        if 'p2c' in self.pos_att_type:
+            scale_factor += 1
+        if 'p2p' in self.pos_att_type:
+            scale_factor += 1
+        scale = math.sqrt(query_layer.size(-1)*scale_factor)
+        attention_scores = torch.bmm(query_layer, key_layer.transpose(-1, -2))/scale
+        #print(key_layer.shape)
+        #print(query_layer.shape)
+        #print(value_layer.shape)
+        #print(attention_scores.shape)
+    
+        if self.relative_attention:
+            #Fix input for rel_embeddings
+            rel_embeddings = self.pos_dropout(rel_embeddings)
+            #Fix dimensions, we enter with Bs*H x N x d
+            rel_att = self.disentangled_attention_bias(query_layer, key_layer, relative_pos, rel_embeddings, scale_factor)
+
+        if rel_att is not None:
+            attention_scores = (attention_scores + rel_att)
+        
+        attention_scores = attention_scores.view(-1, self.num_attention_heads, attention_scores.size(-2), attention_scores.size(-1))
+        
+        
+        if self.mask_epochs is not None:
+           if epoch < self.mask_epochs[-1]:
+               if epoch < self.mask_epochs[-4]:
+                   if self.mask_4 is None:
+                       self.mask_4 = get_attn_mask(N,8)
+                   mask = self.mask_4
+               elif epoch < self.mask_epochs[-3]:
+                   if self.mask_6 is None:
+                       self.mask_6= get_attn_mask(N,12)
+                   mask = self.mask_6
+               elif epoch < self.mask_epochs[-2]:
+                   if self.mask_8 is None:
+                       self.mask_8 = get_attn_mask(N,18)
+                   mask = self.mask_8
+               else:
+                   if self.mask_10 is None:
+                       self.mask_10 = get_attn_mask(N,20)
+                   mask = self.mask_10
+               attention_scores = attention_scores.masked_fill(mask.to(attention_scores.get_device()) == 0, -1e9)
+
+        # bxhxlxd
+        _attention_probs = torch.softmax(attention_scores, -1)
+        attention_probs = self.dropout(_attention_probs)
+        context_layer = torch.bmm(attention_probs.view(-1, attention_probs.size(-2), attention_probs.size(-1)), value_layer)
+        context_layer = context_layer.view(-1, self.num_attention_heads, context_layer.size(-2), context_layer.size(-1)).permute(0, 2, 1, 3).contiguous()
+        new_context_layer_shape = context_layer.size()[:-2] + (-1,)
+        context_layer = context_layer.view(*new_context_layer_shape)
+        
+        
+
+        return {
+            'hidden_states': context_layer,
+            'attention_probs': _attention_probs,
+            'attention_logits': attention_scores
+            }
+
+    def disentangled_attention_bias(self, query_layer, key_layer, relative_pos, rel_embeddings, scale_factor):
+        if relative_pos is None:
+            q = query_layer.size(-2)
+            relative_pos = build_relative_position(q, key_layer.size(-2), bucket_size = self.position_buckets, max_position = self.max_relative_positions)
+        if relative_pos.dim()==2:
+            relative_pos = relative_pos.unsqueeze(0).unsqueeze(0)
+        elif relative_pos.dim()==3:
+            relative_pos = relative_pos.unsqueeze(1)
+        # bxhxqxk
+        elif relative_pos.dim()!=4:
+            raise ValueError(f'Relative postion ids must be of dim 2 or 3 or 4. {relative_pos.dim()}')
+        #print(relative_pos)
+        att_span = self.pos_ebd_size
+        relative_pos = relative_pos.long().to(query_layer.device)
+
+        rel_embeddings = rel_embeddings[self.pos_ebd_size - att_span:self.pos_ebd_size + att_span, :].unsqueeze(0) #.repeat(query_layer.size(0)//self.num_attention_heads, 1, 1)
+        if self.share_att_key:
+            pos_query_layer = self.transpose_for_scores(self.query_proj(rel_embeddings), self.num_attention_heads)\
+                .repeat(query_layer.size(0)//self.num_attention_heads, 1, 1) #.split(self.all_head_size, dim=-1)
+            pos_key_layer = self.transpose_for_scores(self.key_proj(rel_embeddings), self.num_attention_heads)\
+                .repeat(query_layer.size(0)//self.num_attention_heads, 1, 1) #.split(self.all_head_size, dim=-1)
+        else:
+            if 'c2p' in self.pos_att_type or 'p2p' in self.pos_att_type:
+                pos_key_layer = self.transpose_for_scores(self.pos_key_proj(rel_embeddings), self.num_attention_heads)\
+                    .repeat(query_layer.size(0)//self.num_attention_heads, 1, 1) #.split(self.all_head_size, dim=-1)
+                    
+            if 'p2c' in self.pos_att_type or 'p2p' in self.pos_att_type:
+                pos_query_layer = self.transpose_for_scores(self.pos_query_proj(rel_embeddings), self.num_attention_heads)\
+                    .repeat(query_layer.size(0)//self.num_attention_heads, 1, 1) #.split(self.all_head_size, dim=-1)
+        
+        score = 0
+        # content->position
+        if 'c2p' in self.pos_att_type:
+            scale = math.sqrt(pos_key_layer.size(-1)*scale_factor)
+            c2p_att = torch.bmm(query_layer, pos_key_layer.transpose(-1, -2))
+            c2p_pos = torch.clamp(relative_pos + att_span, 0, att_span*2-1)
+            c2p_att = torch.gather(c2p_att, dim=-1, index=c2p_pos.squeeze(0).expand([query_layer.size(0), query_layer.size(1), relative_pos.size(-1)]))
+            score += c2p_att/scale
+            
+        # position->content
+        if 'p2c' in self.pos_att_type or 'p2p' in self.pos_att_type:
+            scale = math.sqrt(pos_query_layer.size(-1)*scale_factor)
+            if key_layer.size(-2) != query_layer.size(-2):
+                r_pos = build_relative_position(key_layer.size(-2), key_layer.size(-2), bucket_size = self.position_buckets, max_position = self.max_relative_positions).to(query_layer.device)
+                r_pos = r_pos.unsqueeze(0)
+            else:
+                r_pos = relative_pos
+
+            p2c_pos = torch.clamp(-r_pos + att_span, 0, att_span*2-1)
+            if query_layer.size(-2) != key_layer.size(-2):
+                pos_index = relative_pos[:, :, :, 0].unsqueeze(-1)
+
+        if 'p2c' in self.pos_att_type:
+            p2c_att = torch.bmm(key_layer, pos_query_layer.transpose(-1, -2))
+            p2c_att = torch.gather(p2c_att, dim=-1, index=p2c_pos.squeeze(0).expand([query_layer.size(0), key_layer.size(-2), key_layer.size(-2)])).transpose(-1,-2)
+            if query_layer.size(-2) != key_layer.size(-2):
+                p2c_att = torch.gather(p2c_att, dim=-2, index=pos_index.expand(p2c_att.size()[:2] + (pos_index.size(-2), key_layer.size(-2))))
+            score += p2c_att/scale
+
+        # position->position
+        if 'p2p' in self.pos_att_type:
+            pos_query = pos_query_layer[:,:,att_span:,:]
+            p2p_att = torch.matmul(pos_query, pos_key_layer.transpose(-1, -2))
+            p2p_att = p2p_att.expand(query_layer.size()[:2] + p2p_att.size()[2:])
+            if query_layer.size(-2) != key_layer.size(-2):
+                p2p_att = torch.gather(p2p_att, dim=-2, index=pos_index.expand(query_layer.size()[:2] + (pos_index.size(-2), p2p_att.size(-1))))
+            p2p_att = torch.gather(p2p_att, dim=-1, index=c2p_pos.expand([query_layer.size(0), query_layer.size(1), query_layer.size(2), relative_pos.size(-1)]))
+            score += p2p_att
+
+        return score
+
+def get_attn_mask(N, w):
+    mask = torch.zeros(1, 1, N, N).cuda()
+    for i in range(N):
+        if i <= w:
+            mask[:, :, i, 0:i+w+1] = 1
+        elif N - i <= w:
+            mask[:, :, i, i-w:N] = 1
+        else:
+            mask[:, :, i, i:i+w+1] = 1
+            mask[:, :, i, i-w:i] = 1
+    return mask

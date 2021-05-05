@@ -34,6 +34,11 @@ def get_args_parser():
                         help='MNIST,CIFAR100,CIFAR10,ImageNet...')
     parser.add_argument('--locality_aware_init', nargs='+', default=None, type=int,
                         help='List of epochs for locality aware initialization, it only works for timm models or with performers')
+    parser.add_argument('--model',default=None,type=str,
+                        help='Types of model: ViT-Small, ViT-Base, ViT-Large')
+    
+    parser.add_argument('--dataparallel', default=None, type=str,
+                        help='GPU Indexes')
     '''Model parameters'''
     parser.add_argument('--attention',default='performer',type=str,
                         help='Type of attention among Performer,Deformable Transformer...')
@@ -208,7 +213,26 @@ def build_model(args):
             norf=args.num_orf,
             kernel=args.kernel
         )
-        
+    elif args.attention == 'disentangled_lai_attention':
+        timm_model=False
+        from disentangled_transformer.disentangled_transformer import DisentangledTransformer
+        print('Building Disentangled LAI Attention')
+        transformer = DisentangledTransformer(
+            d_model= args.embed_dim,
+            dropout=args.dropout,
+            nhead=args.num_heads,
+            dim_feedforward=args.dim_feedforward,
+            num_encoder_layers=args.num_layers,
+            normalize_before=True,
+            pos_att_type=args.de_attn_type,
+            position_buckets=-1,
+            max_relative_positions=-1,
+            max_position_embeddings=args.embed_dim,
+            relative_attention=True,
+            lai=True,
+            mask_epochs=list(args.locality_aware_init)
+        )
+    
     elif args.attention == 'deformable_transformer':
         print('Not implemented')
         pass

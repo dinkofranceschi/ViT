@@ -46,7 +46,7 @@ class VisionTransformer(nn.Module):
         self.out = nn.Linear(num_classes,num_classes)
         
         
-    def forward(self, img):
+    def forward(self, img,epoch=None):
         B=img.shape[0]
         #We enter an image img = B x C x H x W
         img = self.patch_embed(img) # B x C x H x W -> B x (H'W') x d = B x N x d
@@ -55,8 +55,10 @@ class VisionTransformer(nn.Module):
         img = torch.cat((cls_tokens, img), dim=1) # Concatenante in the H'W' dim -> B x (N+1) x d
         
         #print(f'Img_shape b4 transformer = {img.shape}')
-        out=self.transformer(img,self.pos_embed)
-
+        if epoch is None:
+            out=self.transformer(img,self.pos_embed)
+        else: 
+            out=self.transformer(img,self.pos_embed,epoch=epoch)
         
         out=self.norm(out.permute(1,0,2))[:,0] #Getting the classification token
 
@@ -179,7 +181,8 @@ class TransformerEncoderLayer(nn.Module):
     def forward_post(self,
                      src,
                      pos: Optional[Tensor] = None):
-        q = k = self.with_pos_embed(src, pos)
+        #q = k = self.with_pos_embed(src, pos)
+        q=k=src
         src2 = self.self_attn(q, k, value=src)[0]
         src = src + self.dropout1(src2)
         src = self.norm1(src)
@@ -191,7 +194,8 @@ class TransformerEncoderLayer(nn.Module):
     def forward_pre(self, src,
                     pos: Optional[Tensor] = None):
         src2 = self.norm1(src)
-        q = k = self.with_pos_embed(src2, pos)
+        #q = k = self.with_pos_embed(src2, pos)
+        q=k=src2
         src2 = self.self_attn(q, k, value=src2)[0]
         src = src + self.dropout1(src2)
         src2 = self.norm2(src)
