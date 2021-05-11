@@ -31,9 +31,9 @@ Applying deformable multiheadattention to ViT architecture
         - [ ] Adapt it
         - [ ] Testing  
 - [ ] Usage
-- [ ] Define #GPUS and GPU
-    - [ ] Define models we are going to train
-    - [ ] Estimate time and cost for training ImageNet and transfer CIFAR
+- [x] Define #GPUS and GPU
+    - [x] Define models we are going to train
+    - [x] Estimate time and cost for training ImageNet and transfer CIFAR
 - [ ] Research optimal traninig schedules for ImageNet and transfer CIFAR(e.g. cosine annealing)
 
 ## Questions
