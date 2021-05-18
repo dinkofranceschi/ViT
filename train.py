@@ -240,6 +240,7 @@ def build_model(args):
         pass
     else:
         print(f'Unknown attention {args.attention}')
+        
     if not timm_model:
         print('Building ViT...')
         model = VisionTransformer(img_size=args.img_size,
@@ -356,7 +357,35 @@ def build_dataset(args):
           args.img_size = 32
           args.num_classes = 1000       
           args.in_chans= 3
-
+         
+            
+         
+    elif args.dataset == "ImageNet_32":
+        PATH='./data/ImageNet32x32'
+        traindir = os.path.join(PATH, 'train')
+        valdir = os.path.join(PATH, 'val')
+        
+        train_dataset = torchvision.datasets.ImageFolder(
+            traindir,
+            torchvision.transforms.Compose([
+                                              torchvision.transforms.RandomHorizontalFlip(),
+                                              torchvision.transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+                                               torchvision.transforms.RandomResizedCrop(32,scale=(0.7,1)),
+                                               torchvision.transforms.ToTensor(),
+                                               torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                                             ]))
+        
+        train_loader= torch.utils.data.DataLoader(train_dataset,batch_size=args.batch_size,shuffle=True)
+        
+        val_dataset = torchvision.datasets.ImageFolder(
+            valdir,
+            torchvision.transforms.Compose([
+                                       torchvision.transforms.Resize(32),
+                                       torchvision.transforms.ToTensor(),
+                                       torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                                     ]))
+        valid_loader= torch.utils.data.DataLoader(val_dataset,batch_size=args.batch_size,shuffle=False)
+        
     elif args.dataset == "CIFAR100_224":
         train_loader = torch.utils.data.DataLoader(
           torchvision.datasets.CIFAR100('./data/', train=True, download=True,
@@ -435,6 +464,7 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
     for epoch in range(epochs):
         epoch_loss = 0
         epoch_accuracy = 0
+        epoch_5_accuracy=0
     
         for data, label in tqdm(train_loader):
             data = data.to(args.device)
@@ -455,12 +485,22 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
             acc = (output.argmax(dim=1) == label).float().mean()
             epoch_accuracy += acc / len(train_loader)
             epoch_loss += loss / len(train_loader)
+            #Compute top 5 accuracy
+            maxk=5
+            batch_size = label.size(0)
+            _, pred = output.topk(maxk,1,True,True)
+            pred=pred.t()
+            correct = pred.eq(label.view(1,-1).expand_as(pred))
+            acc_5=correct[:5].view(-1).float().sum(0).mul_(100.0/batch_size)
+            epoch_5_accuracy += acc_5 / len(train_loader)
+            
         scheduler.step()
         new_lr=scheduler.get_last_lr()[0] 
         with torch.no_grad():
             model.eval()
             epoch_val_accuracy = 0
             epoch_val_loss = 0
+            epoch_val_5_accuracy = 0
             for data, label in valid_loader:
                 data = data.to(args.device)
                 label = label.to(args.device)
@@ -473,6 +513,16 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
                 acc = (val_output.argmax(dim=1) == label).float().mean()
                 epoch_val_accuracy += acc / len(valid_loader)
                 epoch_val_loss += val_loss / len(valid_loader)
+                
+                #Compute top 5 accuracy
+                maxk=5
+                batch_size = label.size(0)
+                _, pred = val_output.topk(maxk,1,True,True)
+                pred=pred.t()
+                correct = pred.eq(label.view(1,-1).expand_as(pred))
+                acc_5=correct[:5].view(-1).float().sum(0).mul_(100.0/batch_size)
+                epoch_val_5_accuracy += acc_5 / len(valid_loader)
+                
         if args.output_dir:
             checkpoint_paths = [Path(args.output_dir) / 'checkpoint.pth']
             # extra checkpoint before LR drop and every 100 epochs
@@ -496,8 +546,10 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         log['learning_rate']=log['learning_rate']+scheduler.get_last_lr()
         run.log({"train_loss":epoch_loss.item(),
                    "train_accuracy":epoch_accuracy.item(),
+                   "train_5_accuracy":epoch_5_accuracy.item(),
                    "val_loss":epoch_val_loss.item(),
                    "val_accuracy":epoch_val_accuracy.item(),
+                   "val_5_accuracy": epoch_val_5_accuracy.item(),
                    "lr":new_lr})
         final_path=Path(args.output_dir)/ f'final_model_{args.saving_name}_{args.epochs}_epochs.pth'
         save_on_master({
