@@ -335,26 +335,26 @@ def build_dataset(args):
         args.in_chans= 3
     elif args.dataset =='ImageNet':
           train_loader = torch.utils.data.DataLoader(
-          torchvision.datasets.ImageNet('./data/', train=True, download=True,
+          torchvision.datasets.ImageNet('./data/imagenet', train=True, download=False,
                                      transform=torchvision.transforms.Compose([
                                       torchvision.transforms.RandomHorizontalFlip(),
                                       torchvision.transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
-                                       torchvision.transforms.RandomResizedCrop(32,scale=(0.7,1)),
+                                       torchvision.transforms.RandomResizedCrop(224,scale=(0.7,1)),
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ])),
           batch_size=args.batch_size, shuffle=True)
         
           valid_loader = torch.utils.data.DataLoader(
-          torchvision.datasets.ImageNet('./data/', train=False, download=True,
+          torchvision.datasets.ImageNet('./data/imagenet', train=False, download=False,
                                      transform=torchvision.transforms.Compose([
-                                       torchvision.transforms.Resize(32),
+                                       torchvision.transforms.Resize(224),
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ])),
               batch_size=args.batch_size, shuffle=True)
           
-          args.img_size = 32
+          args.img_size = 224
           args.num_classes = 1000       
           args.in_chans= 3
          
