@@ -370,7 +370,7 @@ def build_dataset(args):
           
           train_loader = torch.utils.data.DataLoader(train_data,          
                                                      batch_size=args.batch_size,
-                                                     shuffle=True,num_workers=args.num_workers,
+                                                     num_workers=args.num_workers,
                                                      pin_memory=True,
                                                      sampler=train_sampler)
         
@@ -385,7 +385,7 @@ def build_dataset(args):
           valid_sampler= torch.utils.data.SequentialSampler(valid_data)
           
           valid_loader = torch.utils.data.DataLoader(valid_data,
-                                                     batch_size=args.batch_size, shuffle=True,
+                                                     batch_size=args.batch_size,
                                                      num_workers=args.num_workers,pin_memory=True,
                                                      sampler=valid_sampler)
           
