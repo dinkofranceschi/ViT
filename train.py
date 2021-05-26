@@ -336,7 +336,7 @@ def build_dataset(args):
         args.in_chans= 3
     elif args.dataset =='ImageNet':
           train_loader = torch.utils.data.DataLoader(
-          torchvision.datasets.ImageNet('./data/imagenet', train=True, download=False,
+          torchvision.datasets.ImageNet('./imagenet/', train=True, download=False,
                                      transform=torchvision.transforms.Compose([
                                       torchvision.transforms.RandomHorizontalFlip(),
                                       torchvision.transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
@@ -347,7 +347,7 @@ def build_dataset(args):
           batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
         
           valid_loader = torch.utils.data.DataLoader(
-          torchvision.datasets.ImageNet('./data/imagenet', train=False, download=False,
+          torchvision.datasets.ImageNet('./imagenet/', train=False, download=False,
                                      transform=torchvision.transforms.Compose([
                                        torchvision.transforms.Resize(224),
                                        torchvision.transforms.ToTensor(),
