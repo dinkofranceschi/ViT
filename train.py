@@ -282,7 +282,7 @@ def build_dataset(args):
                                        torchvision.transforms.Normalize(
                                          (0.1307,), (0.3081,))
                                      ])),
-          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True,perf)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
         
         args.img_size= 32
         args.num_classes=10
