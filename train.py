@@ -38,6 +38,7 @@ def get_args_parser():
                         help='Types of model: ViT-Small, ViT-Base, ViT-Large')
     parser.add_argument('--dataparallel', default=None, type=str,
                         help='GPU Indexes')
+    parser.add_argument('--num_workers', default=2,type=int)
     '''Model parameters'''
     parser.add_argument('--attention',default='performer',type=str,
                         help='Type of attention among Performer,Deformable Transformer...')
@@ -343,7 +344,7 @@ def build_dataset(args):
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ])),
-          batch_size=args.batch_size, shuffle=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
         
           valid_loader = torch.utils.data.DataLoader(
           torchvision.datasets.ImageNet('./data/imagenet', train=False, download=False,
@@ -352,7 +353,7 @@ def build_dataset(args):
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ])),
-              batch_size=args.batch_size, shuffle=True)
+              batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
           
           args.img_size = 224
           args.num_classes = 1000       
@@ -491,8 +492,8 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
             _, pred = output.topk(maxk,1,True,True)
             pred=pred.t()
             correct = pred.eq(label.view(1,-1).expand_as(pred))
-            acc_5=correct[:5].view(-1).float().sum(0).mul_(100.0/batch_size)
-            epoch_5_accuracy += acc_5 / len(train_loader)
+            #acc_5=correct[:5].view(-1).float().sum(0).mul_(100.0/batch_size)
+            #epoch_5_accuracy += acc_5 / len(train_loader)
             
         scheduler.step()
         new_lr=scheduler.get_last_lr()[0] 
@@ -520,8 +521,8 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
                 _, pred = val_output.topk(maxk,1,True,True)
                 pred=pred.t()
                 correct = pred.eq(label.view(1,-1).expand_as(pred))
-                acc_5=correct[:5].view(-1).float().sum(0).mul_(100.0/batch_size)
-                epoch_val_5_accuracy += acc_5 / len(valid_loader)
+                #acc_5=correct[:5].view(-1).float().sum(0).mul_(100.0/batch_size)
+                #epoch_val_5_accuracy += acc_5 / len(valid_loader)
                 
         if args.output_dir:
             checkpoint_paths = [Path(args.output_dir) / 'checkpoint.pth']
@@ -546,10 +547,10 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         log['learning_rate']=log['learning_rate']+scheduler.get_last_lr()
         run.log({"train_loss":epoch_loss.item(),
                    "train_accuracy":epoch_accuracy.item(),
-                   "train_5_accuracy":epoch_5_accuracy.item(),
+                   #"train_5_accuracy":epoch_5_accuracy.item(),
                    "val_loss":epoch_val_loss.item(),
                    "val_accuracy":epoch_val_accuracy.item(),
-                   "val_5_accuracy": epoch_val_5_accuracy.item(),
+                   #"val_5_accuracy": epoch_val_5_accuracy.item(),
                    "lr":new_lr})
         final_path=Path(args.output_dir)/ f'final_model_{args.saving_name}_{args.epochs}_epochs.pth'
         save_on_master({
