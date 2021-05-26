@@ -406,7 +406,7 @@ def build_dataset(args):
                                                      num_workers=args.num_workers,pin_memory=True,
                                                      sampler=valid_sampler)
           
-          args.img_size = 224
+          args.img_size = 32
           args.num_classes = 1000       
           args.in_chans= 3
         
