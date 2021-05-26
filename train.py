@@ -13,6 +13,8 @@ import os
 from timm.loss import LabelSmoothingCrossEntropy
 import timm
 import wandb
+import time
+from utils.ops import AverageMeter
 
 
 def get_args_parser():
@@ -489,10 +491,20 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         epoch_loss = 0
         epoch_accuracy = 0
         epoch_5_accuracy=0
-    
+        
+        batch_time = AverageMeter('Time', ':6.3f')
+        data_time = AverageMeter('Data', ':6.3f')
+        
+        
+        end = time.time()
+        
         for data, label in tqdm(train_loader):
-            data = data.to(args.device)
-            label = label.to(args.device)
+            data_time.update(time.time() - end)
+            
+            
+            data = data.to(args.device, non_blocking=True)
+            label = label.to(args.device, non_blocking=True)
+            
             #print(data.shape)
             if args.locality_aware_init is not None:
                 output = model(data,epoch)
@@ -518,7 +530,10 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
             correct = pred.eq(label.view(1,-1).expand_as(pred))
             #acc_5=correct[:5].view(-1).float().sum(0).mul_(100.0/batch_size)
             #epoch_5_accuracy += acc_5 / len(train_loader)
+            batch_time.update(time.time() - end)
+            end=time.time()
             
+            print(data_time,batch_time)
         scheduler.step()
         new_lr=scheduler.get_last_lr()[0] 
         with torch.no_grad():
