@@ -504,11 +504,12 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         for data, label in tqdm(train_loader):
             data = data.to(args.device)
             label = label.to(args.device)
+            print(data.shape)
             if args.locality_aware_init is not None:
                 output = model(data,epoch)
             else:
                 output = model(data)
-            #print(output.shape,label.shape)
+            print(output.shape,label.shape)
             loss = criterion(output, label)
     
             optimizer.zero_grad()
