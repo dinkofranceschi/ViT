@@ -282,7 +282,7 @@ def build_dataset(args):
                                        torchvision.transforms.Normalize(
                                          (0.1307,), (0.3081,))
                                      ])),
-          batch_size=args.batch_size, shuffle=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True,)
         
         args.img_size= 32
         args.num_classes=10
@@ -298,7 +298,7 @@ def build_dataset(args):
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
                                      ])),
-          batch_size=args.batch_size, shuffle=True,pin_memory=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True,)
         
         valid_loader = torch.utils.data.DataLoader(
           torchvision.datasets.CIFAR100('./data/', train=False, download=True,
@@ -306,7 +306,7 @@ def build_dataset(args):
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
                                      ])),
-          batch_size=args.batch_size, shuffle=True,pin_memory=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True,)
     
         args.img_size = 32
         args.num_classes= 100
@@ -321,7 +321,7 @@ def build_dataset(args):
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
                                      ])),
-          batch_size=args.batch_size, shuffle=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True,)
         
         valid_loader = torch.utils.data.DataLoader(
           torchvision.datasets.CIFAR10('./data/', train=False, download=True,
@@ -329,34 +329,12 @@ def build_dataset(args):
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
                                      ])),
-          batch_size=args.batch_size, shuffle=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True,)
     
         args.img_size = 32
         args.num_classes= 10
         args.in_chans= 3
-    elif args.dataset =='ImageNet':
-          # train_loader = torch.utils.data.DataLoader(
-          # torchvision.datasets.ImageNet('./imagenet/', split='train', download=False,
-          #                            transform=torchvision.transforms.Compose([
-          #                             torchvision.transforms.RandomHorizontalFlip(),
-          #                             torchvision.transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
-          #                              torchvision.transforms.RandomResizedCrop(224,scale=(0.7,1)),
-          #                              torchvision.transforms.ToTensor(),
-          #                              torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-          #                            ])),
-          # batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
-        
-          # valid_loader = torch.utils.data.DataLoader(
-          # torchvision.datasets.ImageNet('./imagenet/', split='val', download=False,
-          #                            transform=torchvision.transforms.Compose([
-          #                              torchvision.transforms.Resize(224),
-          #                              torchvision.transforms.ToTensor(),
-          #                              torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-          #                            ])),
-          #     batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
-          
-          
-         
+    elif args.dataset =='ImageNet':                       
           train_data=torchvision.datasets.ImageFolder('./imagenet/train',
                                      transform=torchvision.transforms.Compose([
                                       torchvision.transforms.RandomHorizontalFlip(),
@@ -396,30 +374,41 @@ def build_dataset(args):
             
          
     elif args.dataset == "ImageNet_32":
-        PATH='./data/ImageNet32x32'
-        traindir = os.path.join(PATH, 'train')
-        valdir = os.path.join(PATH, 'val')
+          train_data=torchvision.datasets.ImageFolder('./imagenet/train',
+                                     transform=torchvision.transforms.Compose([
+                                      torchvision.transforms.RandomHorizontalFlip(),
+                                      torchvision.transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+                                       torchvision.transforms.RandomResizedCrop(32,scale=(0.7,1)),
+                                       torchvision.transforms.ToTensor(),
+                                       torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                                     ]))
+          
+          train_sampler= torch.utils.data.RandomSampler(train_data)
+          
+          train_loader = torch.utils.data.DataLoader(train_data,          
+                                                     batch_size=args.batch_size,
+                                                     num_workers=args.num_workers,
+                                                     pin_memory=True,
+                                                     sampler=train_sampler)
         
-        train_dataset = torchvision.datasets.ImageFolder(
-            traindir,
-            torchvision.transforms.Compose([
-                                              torchvision.transforms.RandomHorizontalFlip(),
-                                              torchvision.transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
-                                               torchvision.transforms.RandomResizedCrop(32,scale=(0.7,1)),
-                                               torchvision.transforms.ToTensor(),
-                                               torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-                                             ]))
         
-        train_loader= torch.utils.data.DataLoader(train_dataset,batch_size=args.batch_size,shuffle=True)
-        
-        val_dataset = torchvision.datasets.ImageFolder(
-            valdir,
-            torchvision.transforms.Compose([
+          valid_data =  torchvision.datasets.ImageFolder('./imagenet/val',
+                                     transform=torchvision.transforms.Compose([
                                        torchvision.transforms.Resize(32),
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ]))
-        valid_loader= torch.utils.data.DataLoader(val_dataset,batch_size=args.batch_size,shuffle=False)
+          
+          valid_sampler= torch.utils.data.SequentialSampler(valid_data)
+          
+          valid_loader = torch.utils.data.DataLoader(valid_data,
+                                                     batch_size=args.batch_size,
+                                                     num_workers=args.num_workers,pin_memory=True,
+                                                     sampler=valid_sampler)
+          
+          args.img_size = 224
+          args.num_classes = 1000       
+          args.in_chans= 3
         
     elif args.dataset == "CIFAR100_224":
         train_loader = torch.utils.data.DataLoader(
@@ -431,7 +420,7 @@ def build_dataset(args):
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
                                      ])),
-          batch_size=args.batch_size, shuffle=True,pin_memory=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
         
         valid_loader = torch.utils.data.DataLoader(
           torchvision.datasets.CIFAR100('./data/', train=False, download=True,
@@ -440,7 +429,7 @@ def build_dataset(args):
                                        torchvision.transforms.ToTensor(),
                                        torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
                                      ])),
-          batch_size=args.batch_size, shuffle=True,pin_memory=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
         
         args.img_size = 224
         args.num_classes = 100
@@ -460,7 +449,7 @@ def build_dataset(args):
                                     torchvision.transforms.Normalize(
                                          (0.1307,), (0.3081,)),
                                      ])),
-          batch_size=args.batch_size, shuffle=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
         
         valid_loader = torch.utils.data.DataLoader(
           torchvision.datasets.MNIST('./data/', train=False, download=True,
@@ -473,7 +462,7 @@ def build_dataset(args):
                                     torchvision.transforms.Normalize(
                                          (0.1307,), (0.3081,)),
                                      ])),
-          batch_size=args.batch_size, shuffle=True)
+          batch_size=args.batch_size, shuffle=True,num_workers=args.num_workers,pin_memory=True)
         
         args.img_size= 224
         args.num_classes=10
