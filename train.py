@@ -600,7 +600,7 @@ def main(args):
         args.device='cuda'
         device_ids=[int(elem) for elem in args.dataparallel.split(',')]
         print(f"Using GPU devices {device_ids}")
-        model=nn.DistributedDataParallel(model,device_ids=device_ids)
+        model=nn.parallel.DistributedDataParallel(model,device_ids=device_ids)
     model.to(args.device)
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"n_parameters={n_parameters}")
