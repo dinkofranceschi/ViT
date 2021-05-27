@@ -1,0 +1,50 @@
+2021-05-27 17:07:32,370 INFO    MainThread:9740 [wandb_setup.py:_flush():69] setting env: {}
+2021-05-27 17:07:32,370 INFO    MainThread:9740 [wandb_setup.py:_flush():69] setting login settings: {}
+2021-05-27 17:07:32,370 INFO    MainThread:9740 [wandb_init.py:_log_setup():336] Logging user logs to C:\Users\lucas\Documents\GitHub\ViT\wandb\run-20210527_170732-15q5kqfm\logs\debug.log
+2021-05-27 17:07:32,371 INFO    MainThread:9740 [wandb_init.py:_log_setup():337] Logging internal logs to C:\Users\lucas\Documents\GitHub\ViT\wandb\run-20210527_170732-15q5kqfm\logs\debug-internal.log
+2021-05-27 17:07:32,371 INFO    MainThread:9740 [wandb_init.py:init():369] calling init triggers
+2021-05-27 17:07:32,371 INFO    MainThread:9740 [wandb_init.py:init():374] wandb.init called with sweep_config: {}
+config: {}
+2021-05-27 17:07:32,371 INFO    MainThread:9740 [wandb_init.py:init():418] starting backend
+2021-05-27 17:07:32,371 INFO    MainThread:9740 [backend.py:_multiprocessing_setup():69] multiprocessing start_methods=spawn, using: spawn
+2021-05-27 17:07:32,377 INFO    MainThread:9740 [backend.py:ensure_launched():123] starting backend process...
+2021-05-27 17:07:32,501 INFO    MainThread:9740 [backend.py:ensure_launched():127] started backend process with pid: 20356
+2021-05-27 17:07:32,501 INFO    MainThread:9740 [wandb_init.py:init():423] backend started and connected
+2021-05-27 17:07:32,502 INFO    MainThread:9740 [wandb_init.py:init():463] updated telemetry
+2021-05-27 17:07:32,502 INFO    MainThread:9740 [wandb_init.py:init():482] communicating current version
+2021-05-27 17:07:34,182 INFO    MainThread:9740 [wandb_init.py:init():487] got version response upgrade_message: "wandb version 0.10.30 is available!  To upgrade, please run:\n $ pip install wandb --upgrade"
+
+2021-05-27 17:07:34,184 INFO    MainThread:9740 [wandb_init.py:init():495] communicating run to backend with 30 second timeout
+2021-05-27 17:07:36,410 INFO    MainThread:9740 [wandb_init.py:init():520] starting run threads in backend
+2021-05-27 17:07:41,406 INFO    MainThread:9740 [wandb_run.py:_console_start():1507] atexit reg
+2021-05-27 17:07:41,407 INFO    MainThread:9740 [wandb_run.py:_redirect():1370] redirect: SettingsConsole.WRAP
+2021-05-27 17:07:41,407 INFO    MainThread:9740 [wandb_run.py:_redirect():1405] Wrapping output streams.
+2021-05-27 17:07:41,407 INFO    MainThread:9740 [wandb_run.py:_redirect():1421] Redirects installed.
+2021-05-27 17:07:41,407 INFO    MainThread:9740 [wandb_init.py:init():544] run started, returning control to user process
+2021-05-27 17:07:41,408 INFO    MainThread:9740 [wandb_run.py:_config_callback():748] config_cb None None {'lr': 0.0001, 'batch_size': 128, 'epochs': 100, 'gamma_lr': 0.9, 'step_lr': 70, 'clip_norm': 1, 'device': 'cuda', 'smoothing': 0.1, 'dataset': 'CIFAR100', 'locality_aware_init': None, 'model': None, 'dataparallel': None, 'num_workers': 2, 'attention': 'performer', 'de_attn_type': 'c2p|p2c', 'patch_size': 4, 'num_layers': 4, 'embed_dim': 384, 'dim_feedforward': 1536, 'num_heads': 6, 'num_orf': 16, 'kernel': 'softmax', 'dropout': 0.1, 'pre_trained': True, 'wandb_project': 'Deformable ViT', 'wandb_entity': 'ltononro', 'wandb_group': 'ViT', 'log_dir': 'logs', 'output_dir': './outputs/', 'save_freq': 20, 'saving_name': 'ViT', 'img_size': 32, 'num_classes': 100, 'in_chans': 3}
+2021-05-27 17:07:41,408 INFO    MainThread:9740 [wandb_watch.py:watch():39] Watching
+2021-05-27 17:07:52,008 INFO    MainThread:9740 [wandb_run.py:_atexit_cleanup():1477] got exitcode: 255
+2021-05-27 17:07:52,008 INFO    MainThread:9740 [wandb_run.py:_restore():1449] restore
+2021-05-27 17:07:52,380 INFO    MainThread:9740 [wandb_run.py:_wait_for_finish():1599] got exit ret: file_counts {
+  wandb_count: 1
+  media_count: 1
+}
+pusher_stats {
+  uploaded_bytes: 7020
+  total_bytes: 7020
+}
+
+2021-05-27 17:07:54,396 INFO    MainThread:9740 [wandb_run.py:_wait_for_finish():1599] got exit ret: done: true
+exit_result {
+}
+file_counts {
+  wandb_count: 5
+  media_count: 1
+}
+pusher_stats {
+  uploaded_bytes: 17859
+  total_bytes: 17859
+}
+
+2021-05-27 17:07:55,851 INFO    MainThread:9740 [wandb_run.py:_show_summary():1754] rendering summary
+2021-05-27 17:07:55,852 INFO    MainThread:9740 [wandb_run.py:_show_files():1821] logging synced files

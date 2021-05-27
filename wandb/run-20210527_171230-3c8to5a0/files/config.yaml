@@ -1,0 +1,124 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.10.23
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.8.5
+    t:
+      1:
+      - 1
+      2:
+      - 1
+      3:
+      - 1
+      4: 3.8.5
+      5: 0.10.23
+      8:
+      - 3
+      - 5
+attention:
+  desc: null
+  value: performer
+batch_size:
+  desc: null
+  value: 128
+clip_norm:
+  desc: null
+  value: 1
+dataparallel:
+  desc: null
+  value: null
+dataset:
+  desc: null
+  value: CIFAR100
+de_attn_type:
+  desc: null
+  value: c2p|p2c
+device:
+  desc: null
+  value: cuda
+dim_feedforward:
+  desc: null
+  value: 1536
+dropout:
+  desc: null
+  value: 0.1
+embed_dim:
+  desc: null
+  value: 384
+epochs:
+  desc: null
+  value: 100
+gamma_lr:
+  desc: null
+  value: 0.9
+img_size:
+  desc: null
+  value: 32
+in_chans:
+  desc: null
+  value: 3
+kernel:
+  desc: null
+  value: softmax
+locality_aware_init:
+  desc: null
+  value: null
+log_dir:
+  desc: null
+  value: logs
+lr:
+  desc: null
+  value: 0.0001
+model:
+  desc: null
+  value: null
+num_classes:
+  desc: null
+  value: 100
+num_heads:
+  desc: null
+  value: 6
+num_layers:
+  desc: null
+  value: 4
+num_orf:
+  desc: null
+  value: 16
+num_workers:
+  desc: null
+  value: 2
+output_dir:
+  desc: null
+  value: ./outputs/
+patch_size:
+  desc: null
+  value: 4
+pre_trained:
+  desc: null
+  value: true
+save_freq:
+  desc: null
+  value: 20
+saving_name:
+  desc: null
+  value: ViT
+smoothing:
+  desc: null
+  value: 0.1
+step_lr:
+  desc: null
+  value: 70
+wandb_entity:
+  desc: null
+  value: ltononro
+wandb_group:
+  desc: null
+  value: ViT
+wandb_project:
+  desc: null
+  value: Deformable ViT

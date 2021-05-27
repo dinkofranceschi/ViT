@@ -14,7 +14,7 @@ from timm.loss import LabelSmoothingCrossEntropy
 import timm
 import wandb
 import time
-from utils.ops import AverageMeter
+from utils.ops import AverageMeter,accuracy
 
 
 def get_args_parser():
@@ -352,7 +352,8 @@ def build_dataset(args):
                                                      batch_size=args.batch_size,
                                                      num_workers=args.num_workers,
                                                      pin_memory=True,
-                                                     sampler=train_sampler)
+                                                     sampler=train_sampler,
+                                                     prefetch_factor=6)
         
         
           valid_data =  torchvision.datasets.ImageFolder('./imagenet/val',
@@ -367,7 +368,8 @@ def build_dataset(args):
           valid_loader = torch.utils.data.DataLoader(valid_data,
                                                      batch_size=args.batch_size,
                                                      num_workers=args.num_workers,pin_memory=True,
-                                                     sampler=valid_sampler)
+                                                     sampler=valid_sampler,
+                                                     prefetch_factor=4)
           
           args.img_size = 224
           args.num_classes = 1000       
@@ -385,7 +387,7 @@ def build_dataset(args):
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ]))
           
-          train_sampler= torch.utils.data.RandomSampler(train_data)
+          train_sampler= torch.utils.data.DistributedSampler(train_data)
           
           train_loader = torch.utils.data.DataLoader(train_data,          
                                                      batch_size=args.batch_size,
@@ -401,7 +403,7 @@ def build_dataset(args):
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ]))
           
-          valid_sampler= torch.utils.data.SequentialSampler(valid_data)
+          valid_sampler= torch.utils.data.DistributedSampler(valid_data)
           
           valid_loader = torch.utils.data.DataLoader(valid_data,
                                                      batch_size=args.batch_size,
@@ -518,17 +520,11 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
 
             loss.backward()
             optimizer.step()
-            acc = (output.argmax(dim=1) == label).float().mean()
-            epoch_accuracy += acc / len(train_loader)
+            acc1,acc5 = accuracy(output,label,topk=(1,5))
+            epoch_accuracy += acc1[0] / len(train_loader)
             epoch_loss += loss / len(train_loader)
             #Compute top 5 accuracy
-            maxk=5
-            batch_size = label.size(0)
-            _, pred = output.topk(maxk,1,True,True)
-            pred=pred.t()
-            correct = pred.eq(label.view(1,-1).expand_as(pred))
-            #acc_5=correct[:5].view(-1).float().sum(0).mul_(100.0/batch_size)
-            #epoch_5_accuracy += acc_5 / len(train_loader)
+            epoch_5_accuracy += acc5[0] / len(train_loader)
             #batch_time.update(time.time() - end)
             #end=time.time()
             
@@ -548,19 +544,12 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
                 else:    
                     val_output = model(data)
                 val_loss = criterion(val_output, label)
-    
-                acc = (val_output.argmax(dim=1) == label).float().mean()
-                epoch_val_accuracy += acc / len(valid_loader)
+                acc1,acc5 = accuracy(val_output,label,topk=(1,5))
+                epoch_val_accuracy += acc1[0] / len(valid_loader)
                 epoch_val_loss += val_loss / len(valid_loader)
                 
                 #Compute top 5 accuracy
-                maxk=5
-                batch_size = label.size(0)
-                _, pred = val_output.topk(maxk,1,True,True)
-                pred=pred.t()
-                correct = pred.eq(label.view(1,-1).expand_as(pred))
-                #acc_5=correct[:5].view(-1).float().sum(0).mul_(100.0/batch_size)
-                #epoch_val_5_accuracy += acc_5 / len(valid_loader)
+                epoch_val_5_accuracy += acc5[0] / len(valid_loader)
                 
         if args.output_dir:
             checkpoint_paths = [Path(args.output_dir) / 'checkpoint.pth']
@@ -585,10 +574,10 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         log['learning_rate']=log['learning_rate']+scheduler.get_last_lr()
         run.log({"train_loss":epoch_loss.item(),
                    "train_accuracy":epoch_accuracy.item(),
-                   #"train_5_accuracy":epoch_5_accuracy.item(),
+                   "train_5_accuracy":epoch_5_accuracy.item(),
                    "val_loss":epoch_val_loss.item(),
                    "val_accuracy":epoch_val_accuracy.item(),
-                   #"val_5_accuracy": epoch_val_5_accuracy.item(),
+                   "val_5_accuracy": epoch_val_5_accuracy.item(),
                    "lr":new_lr})
         final_path=Path(args.output_dir)/ f'final_model_{args.saving_name}_{args.epochs}_epochs.pth'
         save_on_master({
@@ -611,7 +600,7 @@ def main(args):
         args.device='cuda'
         device_ids=[int(elem) for elem in args.dataparallel.split(',')]
         print(f"Using GPU devices {device_ids}")
-        model=nn.DataParallel(model,device_ids=device_ids)
+        model=nn.DistributedDataParallel(model,device_ids=device_ids)
     model.to(args.device)
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"n_parameters={n_parameters}")

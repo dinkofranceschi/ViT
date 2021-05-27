@@ -1,0 +1,25 @@
+{
+    "os": "Windows-10-10.0.19041-SP0",
+    "python": "3.8.5",
+    "heartbeatAt": "2021-05-27T20:12:34.526889",
+    "startedAt": "2021-05-27T20:12:30.588721",
+    "docker": null,
+    "cpu_count": 12,
+    "cuda": null,
+    "args": [
+        "--dataset",
+        "CIFAR100"
+    ],
+    "state": "running",
+    "program": "train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "https://github.com/dinkofranceschi/ViT.git",
+        "commit": "0a7b628d4ca601db35e9d270f8a693c92acb5caa"
+    },
+    "email": "ltononro@gmail.com",
+    "root": "C:/Users/lucas/Documents/GitHub/ViT",
+    "host": "LAPTOP-OPJC7JH1",
+    "username": "lucas",
+    "executable": "C:\\Users\\lucas\\anaconda3\\envs\\tcc\\python.exe"
+}

@@ -1,0 +1,25 @@
+2021-05-27 19:11:42,587 INFO    MainThread:19108 [internal.py:wandb_internal():88] W&B internal server running at pid: 19108, started at: 2021-05-27 19:11:42.581981
+2021-05-27 19:11:42,589 DEBUG   HandlerThread:19108 [handler.py:handle_request():120] handle_request: check_version
+2021-05-27 19:11:42,589 INFO    WriterThread:19108 [datastore.py:open_for_write():77] open: C:\Users\lucas\Documents\GitHub\ViT\wandb\run-20210527_191141-2wzz9zjd\run-2wzz9zjd.wandb
+2021-05-27 19:11:42,590 DEBUG   SenderThread:19108 [sender.py:send():160] send: header
+2021-05-27 19:11:42,590 DEBUG   SenderThread:19108 [sender.py:send():160] send: request
+2021-05-27 19:11:42,590 DEBUG   SenderThread:19108 [sender.py:send_request():169] send_request: check_version
+2021-05-27 19:11:42,954 DEBUG   SenderThread:19108 [sender.py:send():160] send: run
+2021-05-27 19:11:43,602 INFO    SenderThread:19108 [sender.py:_start_run_threads():651] run started: 2wzz9zjd with start time 1622153501
+2021-05-27 19:11:43,602 DEBUG   SenderThread:19108 [sender.py:send():160] send: summary
+2021-05-27 19:11:43,602 DEBUG   HandlerThread:19108 [handler.py:handle_request():120] handle_request: run_start
+2021-05-27 19:11:43,610 INFO    SenderThread:19108 [sender.py:_save_file():781] saving file wandb-summary.json with policy end
+2021-05-27 19:11:44,178 WARNING MainThread:19108 [internal.py:wandb_internal():146] Internal process interrupt: 1
+2021-05-27 19:11:45,020 WARNING MainThread:19108 [internal.py:wandb_internal():146] Internal process interrupt: 2
+2021-05-27 19:11:45,020 ERROR   MainThread:19108 [internal.py:wandb_internal():149] Internal process interrupted.
+2021-05-27 19:11:45,122 DEBUG   HandlerThread:19108 [meta.py:__init__():34] meta init
+2021-05-27 19:11:45,122 DEBUG   HandlerThread:19108 [meta.py:__init__():48] meta init done
+2021-05-27 19:11:45,123 DEBUG   HandlerThread:19108 [meta.py:probe():190] probe
+2021-05-27 19:11:45,127 DEBUG   HandlerThread:19108 [meta.py:_setup_git():180] setup git
+2021-05-27 19:11:45,666 INFO    SenderThread:19108 [sender.py:finish():884] shutting down sender
+2021-05-27 19:11:45,757 DEBUG   HandlerThread:19108 [meta.py:_setup_git():187] setup git done
+2021-05-27 19:11:45,757 DEBUG   HandlerThread:19108 [meta.py:_save_pip():52] save pip
+2021-05-27 19:11:45,757 DEBUG   HandlerThread:19108 [meta.py:_save_pip():66] save pip done
+2021-05-27 19:11:45,758 DEBUG   HandlerThread:19108 [meta.py:probe():231] probe done
+2021-05-27 19:11:45,764 INFO    HandlerThread:19108 [handler.py:finish():624] shutting down handler
+2021-05-27 19:11:45,975 INFO    WriterThread:19108 [datastore.py:close():258] close: C:\Users\lucas\Documents\GitHub\ViT\wandb\run-20210527_191141-2wzz9zjd\run-2wzz9zjd.wandb
