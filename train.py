@@ -14,6 +14,8 @@ from timm.loss import LabelSmoothingCrossEntropy
 import timm
 import wandb
 import time
+import random
+import numpy as np
 from utils.ops import AverageMeter,accuracy,init_distributed_mode,get_rank
 
 
@@ -483,6 +485,19 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
     
     init_distributed_mode(args)
     seed = args.seed + get_rank()
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+
+    if args.dataparallel is not None:
+        args.device='cuda'
+        device_ids=[int(elem) for elem in args.dataparallel.split(',')]
+        print(f"Using GPU devices {device_ids}")
+        model=nn.DataParallel(model,device_ids=device_ids)
+    if args.distributed:
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[len(args.dataparallel)-1])
+        print(f"Using distributed data parallel: {args.distributed}")
+
     run = wandb.init(project=args.wandb_project,entity=args.wandb_entity,group=args.wandb_group)
     wandb.config.update(args)
     wandb.watch(model)
@@ -605,14 +620,7 @@ def main(args):
     model,criterion,optimizer,scheduler = build_model(args)
     model.to(args.device)
     criterion.to(args.device)
-    if args.dataparallel is not None:
-        args.device='cuda'
-        device_ids=[int(elem) for elem in args.dataparallel.split(',')]
-        print(f"Using GPU devices {device_ids}")
-        model=nn.DataParallel(model,device_ids=device_ids)
-    if args.distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[len(args.dataparallel)-1])
-        print(f"Using distributed data parallel: {args.distributed}")
+
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"n_parameters={n_parameters}")
     
