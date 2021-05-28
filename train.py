@@ -14,7 +14,7 @@ from timm.loss import LabelSmoothingCrossEntropy
 import timm
 import wandb
 import time
-from utils.ops import AverageMeter,accuracy
+from utils.ops import AverageMeter,accuracy,init_distributed_mode,get_rank
 
 
 def get_args_parser():
@@ -41,6 +41,9 @@ def get_args_parser():
     parser.add_argument('--dataparallel', default=None, type=str,
                         help='GPU Indexes')
     parser.add_argument('--num_workers', default=2,type=int)
+    parser.add_argument('--seed', default=42, type=int)
+    parser.add_argument('--world_size', default=8, type=int,
+                        help='number of distributed processes')
     '''Model parameters'''
     parser.add_argument('--attention',default='performer',type=str,
                         help='Type of attention among Performer,Deformable Transformer...')
@@ -387,7 +390,7 @@ def build_dataset(args):
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ]))
           
-          train_sampler= torch.utils.data.RandomSampler(train_data)
+          train_sampler= torch.utils.data.DistributedSampler(train_data)
           
           train_loader = torch.utils.data.DataLoader(train_data,          
                                                      batch_size=args.batch_size,
@@ -403,7 +406,7 @@ def build_dataset(args):
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ]))
           
-          valid_sampler= torch.utils.data.SequentialSampler(valid_data)
+          valid_sampler= torch.utils.data.DistributedSampler(valid_data)
           
           valid_loader = torch.utils.data.DataLoader(valid_data,
                                                      batch_size=args.batch_size,
@@ -476,6 +479,9 @@ def build_dataset(args):
 
 
 def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epochs,clip_norm):
+    
+    init_distributed_mode(args)
+    seed = args.seed + get_rank()
     run = wandb.init(project=args.wandb_project,entity=args.wandb_entity,group=args.wandb_group)
     wandb.config.update(args)
     wandb.watch(model)
@@ -596,15 +602,19 @@ def main(args):
 
     train_loader,valid_loader=build_dataset(args) 
     model,criterion,optimizer,scheduler = build_model(args)
+    model.to(args.device)
+    criterion.to(args.device)
     if args.dataparallel is not None:
         args.device='cuda'
         device_ids=[int(elem) for elem in args.dataparallel.split(',')]
         print(f"Using GPU devices {device_ids}")
         model=nn.DataParallel(model,device_ids=device_ids)
-    model.to(args.device)
+    if args.distributed:
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+        print(f"Using distributed data parallel: {args.distributed}")
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"n_parameters={n_parameters}")
-    criterion.to(args.device)
+    
     print(f'args:{args}')
     print('Start training')
     start_time=time.time()
