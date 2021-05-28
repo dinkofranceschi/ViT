@@ -483,7 +483,7 @@ def build_dataset(args):
 
 def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epochs,clip_norm):
     
-    init_distributed_mode(args)
+    
     seed = args.seed + get_rank()
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -497,6 +497,7 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
     if args.distributed:
         args.device='cuda'
         args.device_ids=[int(elem) for elem in args.dataparallel.split(',')]
+        init_distributed_mode(args)
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[len(args.dataparallel)-1])
         print(f"Using distributed data parallel: {args.distributed}. Using GPU devices {args.device_ids}.")
 
