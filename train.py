@@ -44,6 +44,7 @@ def get_args_parser():
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--world_size', default=8, type=int,
                         help='number of distributed processes')
+    parser.add_argument('--distributed', action='store_false')
     '''Model parameters'''
     parser.add_argument('--attention',default='performer',type=str,
                         help='Type of attention among Performer,Deformable Transformer...')
@@ -610,7 +611,7 @@ def main(args):
         print(f"Using GPU devices {device_ids}")
         model=nn.DataParallel(model,device_ids=device_ids)
     if args.distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[len(args.dataparallel)-1])
         print(f"Using distributed data parallel: {args.distributed}")
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"n_parameters={n_parameters}")
