@@ -123,9 +123,9 @@ def accuracy(output, target, topk=(1,)):
 
 def init_distributed_mode(args):
     if args.distributed:
-        args.gpu=args.dataparallel
-        args.rank=args.dataparallel
-        args.world_size=len(args.dataparallel)
+        args.gpu=args.device
+        args.rank=args.device_ids
+        args.world_size=len(args.device_ids)
         torch.cuda.set_device(args.gpu)
         args.dist_backend = 'nccl'
         torch.distributed.init_process_group(backend=args.dist_backend,

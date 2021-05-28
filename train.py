@@ -489,14 +489,16 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
     np.random.seed(seed)
     random.seed(seed)
 
-    if args.dataparallel is not None:
+    if args.dataparallel is not None and not args.distributed:
         args.device='cuda'
-        device_ids=[int(elem) for elem in args.dataparallel.split(',')]
-        print(f"Using GPU devices {device_ids}")
-        model=nn.DataParallel(model,device_ids=device_ids)
+        args.device_ids=[int(elem) for elem in args.dataparallel.split(',')]
+        print(f"Using GPU devices {args.device_ids}")
+        model=nn.DataParallel(model,device_ids=args.device_ids)
     if args.distributed:
+        args.device='cuda'
+        args.device_ids=[int(elem) for elem in args.dataparallel.split(',')]
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[len(args.dataparallel)-1])
-        print(f"Using distributed data parallel: {args.distributed}")
+        print(f"Using distributed data parallel: {args.distributed}. Using GPU devices {args.device_ids}.")
 
     run = wandb.init(project=args.wandb_project,entity=args.wandb_entity,group=args.wandb_group)
     wandb.config.update(args)
