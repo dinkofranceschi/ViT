@@ -123,7 +123,7 @@ def accuracy(output, target, topk=(1,)):
 
 def init_distributed_mode(args):
     if args.distributed:
-        args.gpu=args.device_ids
+        args.gpu=len(args.device_ids)-1
         args.rank=args.device_ids
         args.world_size=len(args.device_ids)
         torch.cuda.set_device(args.gpu)
