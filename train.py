@@ -47,6 +47,7 @@ def get_args_parser():
     parser.add_argument('--world_size', default=8, type=int,
                         help='number of distributed processes')
     parser.add_argument('--distributed', action='store_false')
+    parser.add_argument("--local_rank", type=int, default=0)
     '''Model parameters'''
     parser.add_argument('--attention',default='performer',type=str,
                         help='Type of attention among Performer,Deformable Transformer...')
