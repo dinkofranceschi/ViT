@@ -128,7 +128,7 @@ def init_distributed_mode(args):
     torch.cuda.set_device(args.local_rank)
     
     print('Distributed mode set...[1/2]')
-    torch.distributed.init_process_group(backend='nccl')
+    torch.distributed.init_process_group(backend='gloo')
     
     print('Distributed mode set...[2/2]')
     torch.distributed.barrier()    
