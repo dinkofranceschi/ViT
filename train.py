@@ -498,6 +498,9 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         init_distributed_mode(args)
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank])
         print(f"Using distributed data parallel: {args.distributed}. Using GPU devices {args.device_ids}.")
+        args.device="cuda:{}".format(args.local_rank)
+        model.to(args.device)
+        criterion.to(args.device)
 
     elif args.dataparallel:
         print('Setting data parallel')

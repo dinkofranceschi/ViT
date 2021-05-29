@@ -123,14 +123,12 @@ def accuracy(output, target, topk=(1,)):
 
 def init_distributed_mode(args):
     print('Setting up distributed mode...')
-    args.gpu=len(args.device_ids)-1
+    
     args.world_size=len(args.device_ids)
     torch.cuda.set_device(args.gpu)
     
     print('Distributed mode set...[1/2]')
-    args.dist_backend = 'gloo'
-    torch.distributed.init_process_group(backend=args.dist_backend,
-                                          init_method='env://')
+    torch.distributed.init_process_group(backend='nccl')
     
     print('Distributed mode set...[2/2]')
     torch.distributed.barrier()    
