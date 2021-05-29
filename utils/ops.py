@@ -128,7 +128,7 @@ def init_distributed_mode(args):
     torch.cuda.set_device(args.gpu)
     
     print('Distributed mode set...[1/2]')
-    args.dist_backend = 'nccl'
+    args.dist_backend = 'gloo'
     torch.distributed.init_process_group(backend=args.dist_backend,
                                           init_method='env://')
     
