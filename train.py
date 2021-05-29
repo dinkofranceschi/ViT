@@ -491,6 +491,7 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
     random.seed(seed)
 
     if args.distributed:
+        print('Flag distributed data parallel')
         args.device='cuda'
         args.device_ids=[int(elem) for elem in args.dataparallel.split(',')]
         init_distributed_mode(args)
