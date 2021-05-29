@@ -127,15 +127,13 @@ def init_distributed_mode(args):
     args.world_size=len(args.device_ids)
     torch.cuda.set_device(args.gpu)
     
-    print('Distributed mode set...[1/3]')
+    print('Distributed mode set...[1/2]')
     args.dist_backend = 'nccl'
     torch.distributed.init_process_group(backend=args.dist_backend,
                                           init_method='env://')
     
-    print('Distributed mode set...[2/3]')
+    print('Distributed mode set...[2/2]')
     torch.distributed.barrier()    
-    print('Distributed mode set...[3/3]')
-    setup_for_distributed(args.rank == 0)
     print('Distributed mode set...')
 
 
