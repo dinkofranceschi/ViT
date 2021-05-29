@@ -47,6 +47,7 @@ def get_args_parser():
     parser.add_argument('--world_size', default=8, type=int,
                         help='number of distributed processes')
     parser.add_argument('--distributed', action='store_false')
+    parser.add_argument("--rank", type=int, default=0)
     parser.add_argument("--local_rank", type=int, default=0)
     '''Model parameters'''
     parser.add_argument('--attention',default='performer',type=str,
@@ -495,7 +496,7 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         args.device='cuda'
         args.device_ids=[int(elem) for elem in args.dataparallel.split(',')]
         init_distributed_mode(args)
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[len(args.dataparallel)-1])
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.rank])
         print(f"Using distributed data parallel: {args.distributed}. Using GPU devices {args.device_ids}.")
 
     elif args.dataparallel:
