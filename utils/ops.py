@@ -123,9 +123,8 @@ def accuracy(output, target, topk=(1,)):
 
 def init_distributed_mode(args):
     print('Setting up distributed mode...')
-    
     args.world_size=len(args.device_ids)
-    torch.cuda.set_device(args.local_rank)
+    torch.cuda.set_device(get_rank())
     
     print('Distributed mode set...[1/2]')
     torch.distributed.init_process_group(backend='gloo')
