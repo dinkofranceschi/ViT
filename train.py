@@ -17,8 +17,17 @@ import time
 import random
 import numpy as np
 from utils.ops import AverageMeter,accuracy,init_distributed_mode,get_rank
+from timm.utils import ApexScaler
 
+try:
+    from apex import amp
+    from apex.parallel import DistributedDataParallel as ApexDDP
+    from apex.parallel import convert_syncbn_model
 
+    has_apex = True
+except ImportError:
+    has_apex = False
+    
 def get_args_parser():
     parser = argparse.ArgumentParser('Deformable ViT',add_help=False)
     '''Training parameters'''
@@ -497,10 +506,14 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
         args.device_ids=[int(elem) for elem in args.dataparallel.split(',')]
         init_distributed_mode(args)
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank])
+        #model =  ApexDDP(model, delay_allreduce=True)
         print(f"Using distributed data parallel: {args.distributed}. Using GPU devices {args.device_ids}.")
         args.device="cuda:{}".format(args.local_rank)
         model.to(args.device)
         criterion.to(args.device)
+        
+        model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
+        loss_scaler = ApexScaler()
 
     elif args.dataparallel:
         print('Setting data parallel')
