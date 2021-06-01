@@ -363,8 +363,13 @@ def build_dataset(args):
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ]))
           
-          train_sampler= torch.utils.data.RandomSampler(train_data)
+          if args.distributed:
+              train_sampler= torch.utils.data.DistributedSampler(train_data)
           
+          else:
+              train_sampler = torch.utils.data.RandomSampler(train_data)
+          
+            
           train_loader = torch.utils.data.DataLoader(train_data,          
                                                      batch_size=args.batch_size,
                                                      num_workers=args.num_workers,
@@ -380,8 +385,10 @@ def build_dataset(args):
                                        torchvision.transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                                      ]))
           
-          valid_sampler= torch.utils.data.SequentialSampler(valid_data)
-          
+          if args.distributed:
+              valid_sampler= torch.utils.data.DistributedSampler(valid_data)
+          else:
+              valid_sampler=torch.utils.data.SequentialSampler(valid_data)
           valid_loader = torch.utils.data.DataLoader(valid_data,
                                                      batch_size=args.batch_size,
                                                      num_workers=args.num_workers,pin_memory=True,
