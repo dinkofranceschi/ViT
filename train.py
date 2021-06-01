@@ -502,18 +502,14 @@ def training(model,criterion,optimizer,scheduler,train_loader,valid_loader,epoch
 
     if args.distributed:
         print('Flag distributed data parallel')
-        args.device='cuda'
-        args.device_ids=[int(elem) for elem in args.dataparallel.split(',')]
+        args.device="cuda:{}".format(args.local_rank)
         init_distributed_mode(args)
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank])
         #model =  ApexDDP(model, delay_allreduce=True)
         print(f"Using distributed data parallel: {args.distributed}. Using GPU devices {args.device_ids}.")
-        args.device="cuda:{}".format(args.local_rank)
+        
         model.to(args.device)
         criterion.to(args.device)
-        
-        model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
-        loss_scaler = ApexScaler()
 
     elif args.dataparallel:
         print('Setting data parallel')
