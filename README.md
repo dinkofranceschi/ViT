@@ -1,5 +1,5 @@
 # Deformable ViT
-Applying deformable multiheadattention to ViT architecture
+Applying deformable multiheadattention to Vision Transformer (ViT) deep learning architecture.
 
 
 ## To-do list:
